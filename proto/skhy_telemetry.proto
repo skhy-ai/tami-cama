@@ -28,6 +28,16 @@ enum PayloadType {
   PAYLOAD_QUENCH_DIAGNOSTIC = 1;
   PAYLOAD_DIGITAL_TWIN_STATE = 2;
   PAYLOAD_MACRO_STATE_COMMAND = 3;
+  PAYLOAD_SUBSYSTEM_REPORT = 4;
+}
+
+enum OperationalMode {
+  MODE_STEADY_STATE_NOMINAL = 0;
+  MODE_DIVERTOR_DETACHMENT_FAULT = 1;
+  MODE_HTS_COIL_HOTSPOT_QUENCH = 2;
+  MODE_PELLET_REFUELING_BURST = 3;
+  MODE_IMPURITY_ACCUMULATION = 4;
+  MODE_STARTUP_RAMP = 5;
 }
 
 enum QuenchSeverity {
@@ -112,4 +122,60 @@ message MacroStateCommand {
   string command_id = 4;                       // Unique UUID for command tracking
   uint64 override_timeout_ms = 5;              // Expiration window for real-time interlocks
   string reason = 6;                           // Justification (e.g., "AUTOMATED_QUENCH_INTERLOCK_TRIGGERED")
+}
+
+// Subsystem 1: HTS Magnet Coils & Cryogenics
+message CoilCryoTelemetry {
+  double coil_temperature_k = 1;               // Operating temperature (nominally ~20K)
+  double helium_pressure_bar = 2;              // Supercritical helium coolant pressure
+  double peak_coil_stress_mpa = 3;             // Electromagnetic Lorentz stress
+  double critical_current_ratio = 4;           // I / I_c(B, T) margin (safe < 0.70)
+  double quench_margin_k = 5;                  // T_c - T_op margin
+  double nzpv_mps = 6;                         // Normal Zone Propagation Velocity
+  bool quench_warning = 7;                     // Warning flag
+  string coil_id = 8;                          // Coil module ID (e.g., "HTS-MODULAR-COIL-03")
+}
+
+// Subsystem 2: Plasma Core & Confinement (QI Stellarator Equilibrium)
+message PlasmaCoreTelemetry {
+  double electron_temp_kev = 1;                // T_e in keV (~15 keV)
+  double ion_temp_kev = 2;                     // T_i in keV (~15 keV)
+  double electron_density_1e20_m3 = 3;         // Core density in 10^20 m^-3
+  double energy_confinement_tau_s = 4;         // Confinement time tau_E (s)
+  double lawson_triple_product_kev_s_m3 = 5;   // n * T * tau_E
+  double toroidal_beta_percent = 6;            // Volume-averaged beta %
+  double qi_neoclassical_loss_fraction = 7;    // Quasi-isodynamic orbit loss fraction
+  bool mhd_quiescent = 8;                      // Confinement stability flag
+}
+
+// Subsystem 3: Divertor & First-Wall Heat Exhaust
+message DivertorTelemetry {
+  double peak_heat_flux_mw_per_m2 = 1;         // Strike point heat flux (MW/m^2, limit 10)
+  double target_surface_temp_c = 2;            // Tungsten tile surface temp (°C)
+  bool detachment_achieved = 3;                // Detachment status
+  double impurity_seeding_rate_pa_m3_s = 4;    // Argon/Neon radiative cooling puff rate
+  double sol_plasma_density_1e19_m3 = 5;       // Scrape-off layer density
+  bool thermal_overload_alert = 6;             // Alert if > 10 MW/m^2
+}
+
+// Subsystem 4: Breeding Blanket & Tritium Fuel Cycle
+message BlanketTelemetry {
+  double pb_li_inlet_temp_c = 1;               // Liquid PbLi inlet temperature (°C)
+  double pb_li_outlet_temp_c = 2;              // Liquid PbLi outlet temperature (°C)
+  double neutron_wall_load_mw_per_m2 = 3;      // 14.1 MeV neutron loading
+  double tritium_breeding_ratio = 4;           // TBR (nominally 1.15)
+  double tritium_extraction_rate_g_per_day = 5;// Daily tritium production
+  double coolant_flow_rate_kg_s = 6;           // Blanket mass flow rate
+}
+
+// Multi-Subsystem Composite Telemetry Report
+message SubsystemTelemetryReport {
+  Envelope envelope = 1;
+  OperationalMode active_mode = 2;             // Current operational / failure mode
+  string mode_description = 3;                 // Human-readable mode description
+  CoilCryoTelemetry coil_cryo = 4;
+  PlasmaCoreTelemetry plasma_core = 5;
+  DivertorTelemetry divertor = 6;
+  BlanketTelemetry blanket = 7;
+  DigitalTwinState power_balance = 8;
 }

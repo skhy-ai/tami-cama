@@ -32,6 +32,12 @@ def main():
 
     processes = []
 
+    # Ensure port 8000 is clear on Windows
+    try:
+        subprocess.run(["powershell", "-Command", "Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"], capture_output=True)
+    except Exception:
+        pass
+
     try:
         # 1. Start Level 1 Edge Quench Protection Node
         print("[+] [STEP 1] Starting Level 1 Edge Quench Protection Module (Rust/MTCA.4)...")
@@ -85,20 +91,31 @@ def main():
         res_events = requests.get("http://127.0.0.1:8000/api/v1/quench-events").json()
         print(f"[REST /quench-events]: Captured {len(res_events)} quench runaway frames in Data Lake buffer")
 
-        # Test GraphQL Query
+        # Test Multi-Subsystem REST Endpoint
+        res_sub = requests.get("http://127.0.0.1:8000/api/v1/subsystems/latest").json()
+        print(f"\n[REST /subsystems/latest]: Mode = {res_sub.get('active_mode')} | Desc = {res_sub.get('mode_description')}")
+        print(f"  * Subsystem 1 (Coils & Cryo): Temp = {res_sub['coil_cryo']['coil_temperature_k']}K | Margin = {res_sub['coil_cryo']['quench_margin_k']}K | Stress = {res_sub['coil_cryo']['peak_coil_stress_mpa']} MPa")
+        print(f"  * Subsystem 2 (Plasma Core): Te = {res_sub['plasma_core']['electron_temp_kev']} keV | Lawson = {res_sub['plasma_core']['lawson_triple_product_kev_s_m3']} keV*s/m^3 | Beta = {res_sub['plasma_core']['toroidal_beta_percent']}%")
+        print(f"  * Subsystem 3 (Island Divertor): Heat Flux = {res_sub['divertor']['peak_heat_flux_mw_per_m2']} MW/m^2 | Detached = {res_sub['divertor']['detachment_achieved']} | Tile Temp = {res_sub['divertor']['target_surface_temp_c']} degC")
+        print(f"  * Subsystem 4 (Breeding Blanket): PbLi Temp = {res_sub['blanket']['pb_li_outlet_temp_c']} degC | TBR = {res_sub['blanket']['tritium_breeding_ratio']} | Tritium = {res_sub['blanket']['tritium_extraction_rate_g_per_day']} g/day")
+        print(f"  * Subsystem 5 (Power Balance): Q_sci = {res_sub['power_balance']['scientific_gain_q_sci']} | P_fusion = {res_sub['power_balance']['fusion_power_mw']} MW | P_net = {res_sub['power_balance']['net_electric_power_mw']} MW")
+
+        # Test GraphQL Query for Subsystem Report
         gql_query = """
         query {
-          latestTelemetry {
-            sensorId
-            localizedTemperatureK
-            foasAcousticFrequencyHz
-            normalZonePropagationVelocityMps
-            quenchDetected
+          latestSubsystemReport {
+            activeMode
+            modeDescription
+            coilCryo { coilTemperatureK, quenchMarginK }
+            plasmaCore { electronTempKev, lawsonTripleProductKevSM3 }
+            divertor { peakHeatFluxMwPerM2, detachmentAchieved }
+            blanket { tritiumBreedingRatio, pbLiOutletTempC }
+            powerBalance { scientificGainQSci, netElectricPowerMw, netElectricityAchieved }
           }
         }
         """
         gql_res = requests.post("http://127.0.0.1:8000/graphql", json={"query": gql_query}).json()
-        print(f"[GraphQL /graphql]: Agentic AI Query Result -> {gql_res.get('data')}")
+        print(f"\n[GraphQL /graphql Subsystem Report]: Agentic AI Query Result ->\n  {gql_res.get('data', {}).get('latestSubsystemReport')}")
 
         print("\n[SYSTEM] Terminating active processes to flush HDF5 handles...")
         for p in processes:

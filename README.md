@@ -1,6 +1,6 @@
-# Proxima Fusion - TAMI (Telemetry, Analytics, Monitoring, & Integration) Architecture Stack
+# SKHY - TAMI (Telemetry, Analytics, Monitoring, & Integration) Architecture Stack
 
-Foundational software architecture for the enterprise Instrumentation and Control (I&C) stack of a Quasi-Isodynamic High-Temperature-Superconductor (QI-HTS) stellarator, engineered by the Lead Systems Software Architecture & Staff Engineering team at Proxima Fusion.
+Foundational software architecture for the enterprise Instrumentation and Control (I&C) stack of a Quasi-Isodynamic High-Temperature-Superconductor (QI-HTS) stellarator, engineered by the Lead Systems Software Architecture & Staff Engineering team at SKHY.
 
 ---
 
@@ -65,7 +65,7 @@ Foundational software architecture for the enterprise Instrumentation and Contro
    - **L0/L1 -> L2/L3**: Microsecond deterministic DDS channels and direct UDP fast dump interlock conduit.
    - **L3 -> L4**: Apache Kafka secure streaming conduit with TLS 1.3 encryption.
    - **L4 -> L5**: Read-only REST and GraphQL endpoints for AI training and agent query without back-propagation permissions into control loops.
-3. **Zero-Trust Envelope**: Every message carries a `proxima.telemetry.Envelope` header with nano-second timestamps, source node verification, sequence counters, and security tokens.
+3. **Zero-Trust Envelope**: Every message carries a `skhy.telemetry.Envelope` header with nano-second timestamps, source node verification, sequence counters, and security tokens.
 
 ---
 
@@ -74,7 +74,7 @@ Foundational software architecture for the enterprise Instrumentation and Contro
 ```
 c:\Projects\tami-cama\
 ├── proto/
-│   └── proxima_telemetry.proto          # Protobuf schema (Envelope, QuenchDiagnostic, DigitalTwinState, MacroStateCommand)
+│   └── skhy_telemetry.proto             # Protobuf schema (Envelope, QuenchDiagnostic, DigitalTwinState, MacroStateCommand)
 ├── middleware_hub/                       # Purdue Level 3 Middleware Hub (Rust)
 │   ├── Cargo.toml
 │   ├── build.rs                          # Auto-compiles Protobuf with prost-build & vendored protoc
@@ -85,7 +85,7 @@ c:\Projects\tami-cama\
 │   └── src/main.rs                       # Sub-millisecond multi-sensor fusion (FOAS, dT/dt, NZPV) & microsecond fast dump
 ├── python_common/                        # Generated Python Protobuf package
 │   ├── __init__.py
-│   └── proxima_telemetry_pb2.py
+│   └── skhy_telemetry_pb2.py
 ├── synthetic_generator/                  # Purdue Level 0/1 Synthetic Sensor Generator (Python)
 │   └── synthetic_data_gen.py             # 100 Hz simulation with triggerable REBCO quench runaway
 ├── digital_twin/                         # Purdue Level 4/5 Surrogate Engine (Python / PyTorch)

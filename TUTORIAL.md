@@ -10,6 +10,9 @@ This guide breaks down every single concept step-by-step, using simple analogies
 
 1. [What is Nuclear Fusion?](#1-what-is-nuclear-fusion)
 2. [Tokamaks vs. Stellarators: Taming 100 Million°C Plasma](#2-tokamaks-vs-stellarators-taming-100-millionc-plasma)
+   - 2.5 [Fusion Power Balance & Scientific Gain ($Q_{\text{sci}}$)](#25-fusion-power-balance--scientific-gain-q_sci)
+   - 2.6 [The 5 Core Physical Subsystems of a Quasi-Isodynamic Stellarator](#26-the-5-core-physical-subsystems-of-a-quasi-isodynamic-stellarator)
+   - 2.7 [Operational Modes & Anomaly States: Multi-Physics Dynamics](#27-operational-modes--anomaly-states-multi-physics-dynamics)
 3. [High-Temperature Superconductors (HTS) & REBCO Magnet Coils](#3-high-temperature-superconductors-hts--rebco-magnet-coils)
 4. [The Danger: What is a Magnet Quench?](#4-the-danger-what-is-a-magnet-quench)
 5. [How We Detect Quenches: FOAS & Stray Capacitance](#5-how-we-detect-quenches-foas--stray-capacitance)
@@ -67,7 +70,7 @@ graph TD
     C --> C3[Continuous Steady-State Operation]
 ```
 
-Our software codebase is built specifically for **Quasi-Isodynamic (QI) Superconducting Stellarators** (pioneered by Proxima Fusion).
+Our software codebase is built specifically for **Quasi-Isodynamic (QI) Superconducting Stellarators** engineered by **SKHY**.
 
 ---
 
@@ -95,6 +98,125 @@ flowchart LR
 
 > **Why $Q_{\text{sci}} = 1.0$ is NOT enough for a power plant**:
 > At $Q_{\text{sci}} = 1.0$, $P_{\text{fusion}} = P_{\text{heating}}$. However, because converting electricity to heat ($\eta_{\text{heating}} \approx 60\%$) and converting thermal energy to electricity ($\eta_{\text{thermal}} \approx 38\%$) both have energy losses, $Q_{\text{sci}}$ must reach **$\sim 4.0\text{--}8.0$** before the power plant produces even 1 Watt of net grid power!
+
+---
+
+## 2.6 The 5 Core Physical Subsystems of a Quasi-Isodynamic Stellarator
+
+A commercial fusion power plant is an interconnected ecosystem of 5 core engineering subsystems, each modeled with specialized physics in our Digital Twin:
+
+```mermaid
+graph TD
+    subgraph S1 [Subsystem 1: HTS Magnet Coils & Cryogenics]
+        Coils[REBCO Non-Planar Coils 20K] --> BField[5.5 Tesla QI Confinement Field]
+        Coils --> Stress[Lorentz Stress Tracking 145 MPa]
+    end
+
+    subgraph S2 [Subsystem 2: Plasma Core & Confinement]
+        BField --> Core[Hot Plasma Core: Te/Ti ~15 keV]
+        Core --> FusionReaction[D-T Fusion Reactions: P_fusion = 255 MW]
+        Core --> AlphaHeating[Alpha Particle Self-Heating 3.5 MeV]
+        Core --> NeutronRelease[14.1 MeV Fast Neutrons 80%]
+    end
+
+    subgraph S3 [Subsystem 3: Island Divertor & Heat Exhaust]
+        Core -->|Scrape-off Layer SOL| Divertor[Tungsten Target Plates]
+        Puff[Argon/Neon Impurity Gas Seeding] -->|Radiative Detachment| Divertor
+        Divertor -->|Heat Flux < 10 MW/m2| ThermalExhaust[P_SOL Heat Removal]
+    end
+
+    subgraph S4 [Subsystem 4: Breeding Blanket & Tritium Fuel Cycle]
+        NeutronRelease --> Blanket[Liquid PbLi Eutectic Blanket 500°C]
+        Blanket -->|TBR > 1.05 Target| TritiumExtract[Tritium Fuel Breeding 142 g/day]
+        Blanket --> HeatExchanger[Primary Heat Exchanger Loop]
+    end
+
+    subgraph S5 [Subsystem 5: Balance of Plant BoP & Electrical Conversion]
+        HeatExchanger --> Turbine[Supercritical Steam Turbine eta_th ~ 38%]
+        Turbine --> GrossPower[Gross Electricity P_gross ~ 106.4 MW]
+        GrossPower --> RecircLoop[Aux Recirculation: RF Heating + Cryo Pumps]
+        GrossPower --> NetGrid[Net Electricity Export to Grid P_net > +56 MW]
+    end
+```
+
+### Breakdown of the 5 Subsystems:
+
+1. **Subsystem 1: HTS Magnet Coils & Cryogenics**:
+   - 3D non-planar twisted coils wound with REBCO high-temperature superconductor tape.
+   - Operated at **20 Kelvin** using supercritical helium circulation.
+   - Carries $>10,000\text{ Amperes}$ with zero electrical resistance, producing a 5.5 Tesla quasi-isodynamic magnetic bottle.
+   - Monitors Critical Current Ratio $I/I_c(B, T)$ and Lorentz stress ($\sigma \approx 145\text{ MPa}$).
+
+2. **Subsystem 2: Plasma Core & Confinement**:
+   - The central reaction chamber heated to **150 Million °C** ($T_e, T_i \approx 15\text{ keV}$).
+   - Density $n_e \approx 1.85 \times 10^{20}\text{ m}^{-3}$ and energy confinement time $\tau_E \approx 1.65\text{ s}$.
+   - Evaluates the **Lawson Triple Product** ($n \cdot T \cdot \tau_E \approx 43.3\text{ keV}\cdot\text{s}\cdot\text{m}^{-3}$) to measure proximity to ignition.
+   - Quasi-Isodynamic optimization guarantees closed particle drift orbits and prevents neo-classical losses ($\epsilon_{\text{eff}} < 10^{-4}$).
+
+3. **Subsystem 3: Island Divertor & First-Wall Heat Exhaust**:
+   - The "exhaust pipe" of the stellarator. Hot particles diffusing out of the core enter the Scrape-Off Layer (SOL) and strike tungsten divertor plates.
+   - Engineering limit: **$\le 10\text{ MW/m}^2$** (any higher and the tungsten plates melt!).
+   - **Radiative Detachment**: We inject controlled micro-puffs of Argon/Neon impurity gases. The impurities radiate heat away via light before the particles hit the plates, keeping heat flux at a safe $\sim 4.2\text{ MW/m}^2$.
+
+4. **Subsystem 4: Liquid PbLi Breeding Blanket & Fuel Cycle**:
+   - Fusion produces fast neutrons ($14.1\text{ MeV}$) which carry 80% of fusion power.
+   - Surrounding the vessel is a **Liquid Lead-Lithium (PbLi)** blanket. Neutrons collide with Lithium-6 atoms:
+     $$\text{n} + {}^{6}\text{Li} \to {}^{4}\text{He} + {}^{3}\text{H} (\text{Tritium}) + 4.8\text{ MeV}$$
+   - **Tritium Breeding Ratio (TBR)**: Must be $> 1.05$ (our design achieves $\text{TBR} \approx 1.15$), generating **142 grams of Tritium fuel per day**, making the plant 100% self-sufficient!
+
+5. **Subsystem 5: Balance of Plant (BoP) & Electrical Power Conversion**:
+   - Converts the blanket thermal energy (500°C) into high-pressure steam driving a turbine generator ($\eta_{\text{thermal}} \approx 38\%$).
+   - Subtracts the recirculating power needed to drive auxiliary RF plasma heating and cryogenic helium chillers.
+   - Delivers surplus **Net Electricity ($P_{\text{net}} \approx +56.2\text{ MW}$)** to the municipal power grid!
+
+---
+
+## 2.7 Operational Modes & Anomaly States: Multi-Physics Dynamics
+
+Our synthetic data generator and digital twin simulate both normal operation and realistic engineering anomaly modes:
+
+```mermaid
+stateDiagram-v2
+    [*] --> StartupRamp : Initiate Field Energization
+    StartupRamp --> SteadyStateNominal : Coils at 5.5T & ECRH Ignition
+    
+    state SteadyStateNominal {
+        [*] --> FlattopBurn
+        FlattopBurn : Q_sci = 10.2 | P_net = +56.2 MW
+        FlattopBurn : Coils at 20K | Divertor Detached (4.2 MW/m2)
+    }
+
+    SteadyStateNominal --> PelletRefuelingBurst : Cryogenic D-T Pellet Injected
+    state PelletRefuelingBurst {
+        [*] --> DensitySurge
+        DensitySurge : Density = 3.2e20 m-3 | Q_sci = 16.5
+        DensitySurge : Alpha Burst P_fusion = 412 MW
+    }
+    PelletRefuelingBurst --> SteadyStateNominal : Pellet Dissolves & Stabilizes
+
+    SteadyStateNominal --> DivertorDetachmentFault : Impurity Seeding Line Clogged
+    state DivertorDetachmentFault {
+        [*] --> HeatSurge
+        HeatSurge : Radiative Detachment Lost
+        HeatSurge : Strike Heat Flux > 15 MW/m2 (CRITICAL!)
+    }
+    DivertorDetachmentFault --> SteadyStateNominal : Secondary Ar/Ne Puff Corrected
+
+    SteadyStateNominal --> ImpurityAccumulation : Wall Sputtering Core Contamination
+    state ImpurityAccumulation {
+        [*] --> RadiativeCollapse
+        RadiativeCollapse : Core Temp Drops to 3.8 keV
+        RadiativeCollapse : Q_sci = 1.8 | Grid Deficit -15 MW
+    }
+
+    SteadyStateNominal --> HTSCoilHotspotQuench : Cryo Cooling Interrupted in Coil 3
+    state HTSCoilHotspotQuench {
+        [*] --> ThermalRunaway
+        ThermalRunaway : Hotspot > 90K | FOAS Acoustic Burst > 25kHz
+        ThermalRunaway : Level 1 Edge Interlock Trips (< 50 us)
+    }
+    HTSCoilHotspotQuench --> [*] : Emergency Fast Discharge Dump Breaker
+```
 
 ---
 
