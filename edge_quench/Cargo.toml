@@ -2,7 +2,7 @@
 name = "edge_quench"
 version = "0.1.0"
 edition = "2021"
-authors = ["Proxima Fusion Edge Systems & Magnet Protection Team"]
+authors = ["SKHY Edge Systems & Magnet Protection Team"]
 description = "TAMI Purdue Level 1 Edge Quench Protection Node (MTCA.4 simulated)"
 
 [dependencies]

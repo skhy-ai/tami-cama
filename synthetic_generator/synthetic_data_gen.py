@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Proxima Fusion - TAMI Level 0/1 Synthetic Telemetry Generator
-Simulates high-fidelity Fiber-Optic Acoustic Sensing (FOAS) and Stray-Capacitance sensors
-for REBCO High-Temperature Superconductor (HTS) Stellarator Coils.
+SKHY - TAMI Level 0/1 Synthetic Telemetry Generator
+Simulates high-fidelity Fiber-Optic Acoustic Sensing (FOAS), Stray-Capacitance sensors,
+and real-time plasma state parameters for REBCO High-Temperature Superconductor (HTS) Stellarator Coils.
 """
 
 import sys
@@ -17,7 +17,7 @@ import numpy as np
 # Add parent directory to path to import python_common
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from python_common.proxima_telemetry_pb2 import (
+from python_common.skhy_telemetry_pb2 import (
     PurdueLevel, PayloadType, QuenchSeverity,
     Envelope, QuenchDiagnostic
 )
@@ -71,6 +71,10 @@ class SyntheticSensorNode:
             nzpv_mps = 0.0
             quench_detected = False
             severity = QuenchSeverity.SEVERITY_NOMINAL
+
+            # Flattop plasma burn state: zero driven current (stellarator property), steady density
+            plasma_current_ma = 0.0 + float(np.random.normal(0, 0.002))
+            plasma_density = 1.85 + float(np.random.normal(0, 0.03)) # 1.85e20 m^-3
         else:
             # REBCO Quench Event Dynamics: slow 1-10 cm/s NZPV + high-frequency acoustic emission stress burst
             elapsed_sec = time.time() - self.quench_start_time
@@ -93,6 +97,10 @@ class SyntheticSensorNode:
             quench_detected = True
             severity = QuenchSeverity.SEVERITY_CRITICAL_RUNAWAY
 
+            # Plasma confinement collapses due to magnetic field perturbation
+            plasma_current_ma = 0.0
+            plasma_density = max(0.0, 1.85 - 0.9 * elapsed_sec)
+
         envelope = Envelope(
             timestamp_ns=now_ns,
             source_id=self.sensor_id,
@@ -113,7 +121,9 @@ class SyntheticSensorNode:
             capacitance_shift_rate_pf_per_s=dc_dt,
             normal_zone_propagation_velocity_mps=nzpv_mps,
             quench_detected=quench_detected,
-            severity=severity
+            severity=severity,
+            plasma_current_ma=plasma_current_ma,
+            plasma_density_m3=plasma_density
         )
 
         return quench_msg

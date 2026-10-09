@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package proxima.telemetry;
+package skhy.telemetry;
 
 // ============================================================================
-// Proxima Fusion - TAMI (Telemetry, Analytics, Monitoring, & Integration)
-// Telemetry & Control Schema Definitions v1.0
+// SKHY - TAMI (Telemetry, Analytics, Monitoring, & Integration)
+// Telemetry & Control Schema Definitions v2.0 (Plant Power Balance & Q_sci Upgrade)
 //
 // IEC 62443 Safety & Security Boundary Annotations:
 // - Level 0/1: Physical Sensors & Direct Microsecond Quench Dump Logic (Edge Conduit)
@@ -69,21 +69,39 @@ message QuenchDiagnostic {
   double normal_zone_propagation_velocity_mps = 9; // NZPV (m/s) - slow REBCO 0.01 - 0.1 m/s
   bool quench_detected = 10;                  // Anomaly decision bit
   QuenchSeverity severity = 11;               // Classification severity
+  double plasma_current_ma = 12;              // Toroidal plasma current (MA)
+  double plasma_density_m3 = 13;              // Line-averaged electron density (1e20 / m^3)
 }
 
-// Real-Time 3D Magnetic Flux Surface Reconstruction & Thermal Digital Twin
+// Real-Time 3D Magnetic Flux Surface Reconstruction & Plant Power Balance Digital Twin
 message DigitalTwinState {
   Envelope envelope = 1;
   uint64 simulation_step = 2;                  // Discrete PINN/surrogate calculation step index
+  
+  // 3D Magnetic & Thermal Surfaces
   repeated double magnetic_flux_surface_r = 3; // Radial coordinates of 3D flux surface mesh (m)
   repeated double magnetic_flux_surface_z = 4; // Vertical coordinates of 3D flux surface mesh (m)
   repeated double magnetic_flux_surface_phi = 5;// Toroidal angle coordinates (rad)
   repeated double localized_thermal_loads_k = 6;// Spatial thermal distribution across HTS tiles (K)
+  
+  // MHD & Mechanical Performance
   double peak_coil_strain_mpa = 7;             // Maximum mechanical stress load on magnet casing (MPa)
   double plasma_beta_toroidal = 8;             // Volume-averaged toroidal beta parameter
   double magnetic_axis_displacement_m = 9;     // Axis shift relative to QI equilibrium (m)
   bool equilibrium_converged = 10;            // Convergence status of V3FIT / PINN model
   double pinn_loss = 11;                       // Current physics-informed residual loss
+  
+  // Fusion Physics & Power Balance (Lawson Criterion & Scientific Gain Q_sci)
+  double scientific_gain_q_sci = 12;          // Q_sci = P_fusion / P_heating
+  double engineering_gain_q_eng = 13;         // Q_eng = P_gross_elec / (P_recirc + P_cryo)
+  double fusion_power_mw = 14;                // Thermal power from D-T fusion reactions (MW)
+  double heating_power_mw = 15;               // Auxiliary heating power entering vacuum vessel (MW)
+  double gross_electric_power_mw = 16;        // Total electricity generated before recirculating (MW)
+  double net_electric_power_mw = 17;          // Net power delivered to grid (MW)
+  double recirculating_power_mw = 18;         // Electricity recirculated for plasma heating (MW)
+  double parasitic_cryo_power_mw = 19;        // Power drawn for cryogenic helium cooling of HTS coils (MW)
+  double lawson_triple_product_kev_s_m3 = 20; // Lawson criterion triple product (n * T * tau_E)
+  bool net_electricity_achieved = 21;          // True if net electric power > 0 MW
 }
 
 // Supervisory Control Command (Level 3 -> Level 2/1)

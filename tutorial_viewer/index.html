@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAMI - Superconducting Stellarator Control & Quench Tutorial Viewer</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Mermaid CDN for client-side diagram rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+
+    <!-- Header / Navbar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo-group">
+                <div class="logo-icon">⚡</div>
+                <div class="logo-text">
+                    <span class="brand-name">SKHY</span>
+                    <span class="app-subtitle">TAMI Interactive Architecture & Fusion Tutorial</span>
+                </div>
+            </div>
+            <nav class="nav-links">
+                <button class="nav-btn active" data-tab="interactive-sim">Quench Simulator</button>
+                <button class="nav-btn" data-tab="power-balance">Scientific Gain ($Q_{\text{sci}}$) Plant</button>
+                <button class="nav-btn" data-tab="purdue-explorer">Purdue 6-Tier Architecture</button>
+                <button class="nav-btn" data-tab="pinn-twin">3D PINN Digital Twin</button>
+                <button class="nav-btn" data-tab="guide-doc">Beginner Guide & Diagrams</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        
+        <!-- SECTION 1: Interactive Magnet Quench Simulator -->
+        <section id="interactive-sim" class="tab-pane active">
+            <div class="section-header">
+                <h2>⚡ Interactive REBCO Magnet Quench & FOAS Acoustic Simulator</h2>
+                <p class="section-desc">Adjust temperature, acoustic emission strain frequency, and NZPV to observe real-time MTCA.4 microsecond interlocks.</p>
+            </div>
+
+            <div class="simulator-grid">
+                <!-- Controls Card -->
+                <div class="card glass-card controls-card">
+                    <h3>Sensor Parameter Controls</h3>
+                    
+                    <div class="control-group">
+                        <label for="temp-slider">
+                            Localized REBCO Temperature (K)
+                            <span class="val-badge" id="temp-val">20.0 K</span>
+                        </label>
+                        <input type="range" id="temp-slider" min="10" max="110" value="20" step="0.5">
+                        <div class="slider-labels">
+                            <span>20K (Cryo)</span>
+                            <span class="warning-mark">70K (Warning)</span>
+                            <span class="critical-mark">90K (Quench T_c)</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="foas-slider">
+                            FOAS Acoustic Strain Frequency (Hz)
+                            <span class="val-badge" id="foas-val">1,200 Hz</span>
+                        </label>
+                        <input type="range" id="foas-slider" min="100" max="40000" value="1200" step="100">
+                        <div class="slider-labels">
+                            <span>100 Hz (Ambient)</span>
+                            <span class="critical-mark">25,000 Hz (Stress Burst Threshold)</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="cap-slider">
+                            Capacitance Shift Rate dC/dt (pF/s)
+                            <span class="val-badge" id="cap-val">0.2 pF/s</span>
+                        </label>
+                        <input type="range" id="cap-slider" min="0" max="50" value="0.2" step="0.1">
+                    </div>
+
+                    <div class="preset-buttons">
+                        <button class="btn btn-secondary" id="btn-preset-nominal">Nominal Cryo Preset</button>
+                        <button class="btn btn-danger" id="btn-preset-quench">Trigger REBCO Quench Anomaly</button>
+                    </div>
+                </div>
+
+                <!-- Live Interlock Gauge & Status -->
+                <div class="card glass-card status-card">
+                    <h3>Level 1 MTCA.4 Edge Safety Kernel Output</h3>
+                    
+                    <div class="status-indicator-box" id="status-box">
+                        <div class="status-dot green-pulse" id="status-dot"></div>
+                        <div class="status-info">
+                            <div class="status-title" id="status-title">SYSTEM STATE: NOMINAL</div>
+                            <div class="status-sub" id="status-sub">Superconducting state active. Zero resistance.</div>
+                        </div>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <span class="metric-label">Calculated NZPV</span>
+                            <span class="metric-value" id="nzpv-val">0.0000 m/s</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Interlock Latency</span>
+                            <span class="metric-value highlight-cyan" id="latency-val">21.4 μs</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">FOAS Acoustic Burst</span>
+                            <span class="metric-value" id="acoustic-status">Normal (<25 kHz)</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Breaker Actuator</span>
+                            <span class="metric-value" id="breaker-status">CLOSED (Energized)</span>
+                        </div>
+                    </div>
+
+                    <div class="oscilloscope-box">
+                        <div class="canvas-header">Live Sensor Waveform & Interlock Signal</div>
+                        <canvas id="waveform-canvas" width="450" height="120"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: Fusion Power Balance & Scientific Gain Q_sci Simulator -->
+        <section id="power-balance" class="tab-pane">
+            <div class="section-header">
+                <h2>⚛️ Fusion Power Plant & Scientific Gain ($Q_{\text{sci}}$) Simulator</h2>
+                <p class="section-desc">Based on Sam Wurzel's <a href="https://www.fusionenergybase.com/articles/fusion-physics-part-1-scientific-gain-and-fusion-power-plants" target="_blank">Scientific Gain and Fusion Power Plants</a>. Adjust $Q_{\text{sci}}$ and efficiencies to see net electricity delivered to the grid.</p>
+            </div>
+
+            <div class="simulator-grid">
+                <!-- Controls -->
+                <div class="card glass-card">
+                    <h3>Power Plant Parameters</h3>
+
+                    <div class="control-group">
+                        <label for="qsci-slider">
+                            Scientific Gain ($Q_{\text{sci}} = P_{\text{fusion}} / P_{\text{heating}}$)
+                            <span class="val-badge" id="qsci-val">10.0</span>
+                        </label>
+                        <input type="range" id="qsci-slider" min="0.1" max="25.0" value="10.0" step="0.1">
+                        <div class="slider-labels">
+                            <span class="critical-mark">Q=1.0 (Scientific Breakeven)</span>
+                            <span class="warning-mark">Q=5.0</span>
+                            <span class="highlight-green">Q=10.0 (Commercial Goal)</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="pheat-slider">
+                            Heating Power Entering Plasma ($P_{\text{heating}}$)
+                            <span class="val-badge" id="pheat-val">25 MW</span>
+                        </label>
+                        <input type="range" id="pheat-slider" min="5" max="100" value="25" step="1">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="etath-slider">
+                            Thermal-to-Electric Conversion ($\eta_{\text{thermal}}$)
+                            <span class="val-badge" id="etath-val">38%</span>
+                        </label>
+                        <input type="range" id="etath-slider" min="20" max="55" value="38" step="1">
+                        <div class="slider-labels">
+                            <span>30% (Standard Steam)</span>
+                            <span>45% (Advanced Cycle)</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="etaheat-slider">
+                            Heating System Efficiency ($\eta_{\text{heating}}$)
+                            <span class="val-badge" id="etaheat-val">60%</span>
+                        </label>
+                        <input type="range" id="etaheat-slider" min="10" max="80" value="60" step="1">
+                        <div class="slider-labels">
+                            <span>10% (Lasers)</span>
+                            <span>60% (RF/Microwave)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Power Flow Diagram & Grid Output -->
+                <div class="card glass-card">
+                    <h3>Plant Power Balance Output</h3>
+
+                    <div class="status-indicator-box" id="power-status-box">
+                        <div class="status-dot green-pulse" id="power-status-dot"></div>
+                        <div class="status-info">
+                            <div class="status-title" id="power-status-title">NET ELECTRICITY DELIVERED: +56.3 MW</div>
+                            <div class="status-sub" id="power-status-sub">Commercial Surplus to Power Grid!</div>
+                        </div>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <span class="metric-label">Fusion Power ($P_{\text{fusion}}$)</span>
+                            <span class="metric-value highlight-gold" id="pfusion-val">250.0 MW</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Total Exiting Power ($P_{\text{exit}}$)</span>
+                            <span class="metric-value" id="pexit-val">275.0 MW</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Gross Electricity ($P_{\text{gross}}$)</span>
+                            <span class="metric-value highlight-cyan" id="pgross-val">104.5 MW</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Recirculating Power ($P_{\text{recirc}}$)</span>
+                            <span class="metric-value" id="precirc-val">41.7 MW</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Engineering Gain ($Q_{\text{eng}}$)</span>
+                            <span class="metric-value highlight-green" id="qeng-val">2.08</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Recirculating Fraction</span>
+                            <span class="metric-value" id="recirc-frac-val">39.9%</span>
+                        </div>
+                    </div>
+
+                    <div class="info-box-pinn">
+                        <p><strong>Physics Insight (Sam Wurzel Framework):</strong> At $Q_{\text{sci}} = 1.0$, $P_{\text{fusion}} = P_{\text{heating}}$. However, because converting electricity to heat ($\eta_{\text{heating}}$) and heat to electricity ($\eta_{\text{thermal}}$) has losses, $Q_{\text{sci}}$ must exceed <strong>$\sim 4.0\text{--}8.0$</strong> before the plant generates even 1 Watt of net grid power!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Purdue 6-Tier Architecture Explorer -->
+        <section id="purdue-explorer" class="tab-pane">
+            <div class="section-header">
+                <h2>🏛 Purdue 6-Tier Reference Model & IEC 62443 Conduits</h2>
+                <p class="section-desc">Click any level to inspect security constraints, middleware bridge protocols, and corresponding codebase implementations.</p>
+            </div>
+
+            <div class="purdue-stack-container">
+                <!-- Interactive Purdue Hierarchy Cards -->
+                <div class="purdue-layers">
+                    <div class="purdue-card level-5" data-level="5">
+                        <div class="level-badge">LEVEL 5</div>
+                        <div class="level-content">
+                            <h4>Enterprise Agentic AI & Multi-Physics Training</h4>
+                            <p>FastAPI & Strawberry GraphQL Endpoints for AI Models (`ai_ingestion_api.py`)</p>
+                        </div>
+                    </div>
+
+                    <div class="purdue-card level-4" data-level="4">
+                        <div class="level-badge">LEVEL 4</div>
+                        <div class="level-content">
+                            <h4>Plant Management & Digital Twin Data Lake</h4>
+                            <p>PyTorch PINN Surrogate Engine & HDF5 Persistence (`tami_data_lake.h5`)</p>
+                        </div>
+                    </div>
+
+                    <div class="purdue-card level-3" data-level="3">
+                        <div class="level-badge">LEVEL 3</div>
+                        <div class="level-content">
+                            <h4>TAMI Supervisory Control Middleware Hub</h4>
+                            <p>Rust Middleware (`middleware_hub`), Rate-Limiting & DDS-to-Kafka Bridge</p>
+                        </div>
+                    </div>
+
+                    <div class="purdue-card level-2" data-level="2">
+                        <div class="level-badge">LEVEL 2</div>
+                        <div class="level-content">
+                            <h4>Area Control & Magnet Power Supply PLCs</h4>
+                            <p>Deterministic Real-Time Control Loops & Cryogenic Flow Regulators</p>
+                        </div>
+                    </div>
+
+                    <div class="purdue-card level-1" data-level="1">
+                        <div class="level-badge">LEVEL 1</div>
+                        <div class="level-content">
+                            <h4>Edge Quench Protection Module (MTCA.4 FPGA)</h4>
+                            <p>Rust Microsecond Zero-Allocation Safety Kernel (`edge_quench` <50μs)</p>
+                        </div>
+                    </div>
+
+                    <div class="purdue-card level-0" data-level="0">
+                        <div class="level-badge">LEVEL 0</div>
+                        <div class="level-content">
+                            <h4>Physical Stellarator Hardware & Sensors</h4>
+                            <p>REBCO HTS Coils, FOAS Strain Fiber Cables, Stray Capacitance Probes</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Inspector Panel -->
+                <div class="card glass-card purdue-inspector" id="purdue-inspector">
+                    <h3 id="inspector-title">Select a Purdue Level above to inspect details</h3>
+                    <div id="inspector-body">
+                        <p>The Purdue Model organizes complex industrial plants into 6 isolated security zones connected by strict conduits. Click any layer on the left to see its implementation in this repository.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: 3D PINN Digital Twin -->
+        <section id="pinn-twin" class="tab-pane">
+            <div class="section-header">
+                <h2>🧠 PyTorch Physics-Informed Neural Network (PINN) 3D Digital Twin</h2>
+                <p class="section-desc">Interactive 3D reconstruction of Quasi-Isodynamic stellarator flux surfaces and thermal distribution maps.</p>
+            </div>
+
+            <div class="digital-twin-grid">
+                <div class="card glass-card canvas-3d-card">
+                    <div class="canvas-header-3d">
+                        <span>3D Magnetic Flux Surface Mesh (V3FIT Surrogate)</span>
+                        <span class="live-tag">LIVE RECONSTRUCTION</span>
+                    </div>
+                    <canvas id="canvas-3d" width="600" height="400"></canvas>
+                </div>
+
+                <div class="card glass-card twin-stats-card">
+                    <h3>PINN Physics Parameters</h3>
+                    
+                    <div class="stat-item">
+                        <span class="stat-name">Toroidal Beta ($\beta$)</span>
+                        <span class="stat-val highlight-gold" id="twin-beta">4.25%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-name">Magnetic Axis Shift</span>
+                        <span class="stat-val" id="twin-shift">+1.82 mm</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-name">Peak Magnet Strain</span>
+                        <span class="stat-val" id="twin-strain">142.5 MPa</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-name">PINN Residual Loss</span>
+                        <span class="stat-val highlight-green" id="twin-loss">0.00124</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-name">MHD Equilibrium Status</span>
+                        <span class="stat-val highlight-green">CONVERGED</span>
+                    </div>
+
+                    <div class="info-box-pinn">
+                        <p><strong>What is a PINN?</strong> A Physics-Informed Neural Network incorporates MHD plasma physics equations (Grad-Shafranov equilibrium) directly into its loss function, ensuring predictions obey physical laws.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: Beginner Guide & Markdown Diagrams -->
+        <section id="guide-doc" class="tab-pane">
+            <div class="section-header">
+                <h2>📖 Beginner's Tutorial & Fusion Physics Guide</h2>
+                <p class="section-desc">Step-by-step breakdown of fusion physics, magnet quench, and TAMI software architecture.</p>
+            </div>
+
+            <div class="card glass-card markdown-container" id="markdown-viewer">
+                <div class="loading-spinner">Loading tutorial content and rendering Mermaid diagrams...</div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <p>© Proxima Fusion - TAMI Systems Architecture. Physics references sourced from <a href="https://www.fusionenergybase.com/articles?tag=physics" target="_blank">Fusion Energy Base</a>.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

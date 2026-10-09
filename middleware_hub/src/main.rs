@@ -7,11 +7,11 @@ use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use prost::Message;
 
-pub mod proxima_telemetry {
-    include!(concat!(env!("OUT_DIR"), "/proxima.telemetry.rs"));
+pub mod skhy_telemetry {
+    include!(concat!(env!("OUT_DIR"), "/skhy.telemetry.rs"));
 }
 
-use proxima_telemetry::{
+use skhy_telemetry::{
     Envelope, QuenchDiagnostic, DigitalTwinState, MacroStateCommand,
     PurdueLevel, PayloadType, QuenchSeverity, SystemState,
 };
@@ -57,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     log::info!("=========================================================================");
-    log::info!(" PROXIMA FUSION - TAMI MIDDLEWARE HUB (LEVEL 3 SUPERVISORY CONTROL)");
+    log::info!(" SKHY - TAMI MIDDLEWARE HUB (LEVEL 3 SUPERVISORY CONTROL)");
     log::info!(" Safety Architecture: IEC 62443 Security Level 3 - Zone Segregation");
     log::info!(" Ingest Conduit: DDS / Level 2 Area Control (Port 9001)");
     log::info!(" Egress Conduit: Kafka / Level 4 Enterprise Data Lake (Port 9002 / Forwarder)");

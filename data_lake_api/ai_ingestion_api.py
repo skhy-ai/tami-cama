@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Proxima Fusion - TAMI Level 4/5 Enterprise Integration & Agentic AI API
+SKHY - TAMI Level 4/5 Enterprise Integration & Agentic AI API
 Provides HDF5 Data Lake persistence and REST / GraphQL interfaces for Agentic AI
-multi-physics training and real-time stellarator diagnostic queries.
+multi-physics training, plant power balance, and real-time stellarator diagnostic queries.
 """
 
 import sys
@@ -15,14 +15,17 @@ import h5py
 import numpy as np
 
 from fastapi import FastAPI, Query, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, RedirectResponse
 import uvicorn
 import strawberry
 from strawberry.fastapi import GraphQLRouter
 
 # Add parent directory to path to import python_common
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, ROOT_DIR)
 
-from python_common.proxima_telemetry_pb2 import QuenchDiagnostic, DigitalTwinState
+from python_common.skhy_telemetry_pb2 import QuenchDiagnostic, DigitalTwinState
 
 # ============================================================================
 # In-Memory Buffer & HDF5 Persistence Storage Engine
@@ -74,6 +77,7 @@ class TelemetryGQL:
     capacitance_shift_rate_pf_per_s: float
     normal_zone_propagation_velocity_mps: float
     quench_detected: bool
+    plasma_density_m3: float
 
 @strawberry.type
 class DigitalTwinGQL:
@@ -83,6 +87,16 @@ class DigitalTwinGQL:
     magnetic_axis_displacement_m: float
     pinn_loss: float
     equilibrium_converged: bool
+    scientific_gain_q_sci: float
+    engineering_gain_q_eng: float
+    fusion_power_mw: float
+    heating_power_mw: float
+    gross_electric_power_mw: float
+    net_electric_power_mw: float
+    recirculating_power_mw: float
+    parasitic_cryo_power_mw: float
+    lawson_triple_product_kev_s_m3: float
+    net_electricity_achieved: bool
 
 @strawberry.type
 class QueryGQL:
@@ -102,7 +116,8 @@ class QueryGQL:
                 stray_capacitance_pf=t["stray_capacitance_pf"],
                 capacitance_shift_rate_pf_per_s=t["capacitance_shift_rate_pf_per_s"],
                 normal_zone_propagation_velocity_mps=t["normal_zone_propagation_velocity_mps"],
-                quench_detected=t["quench_detected"]
+                quench_detected=t["quench_detected"],
+                plasma_density_m3=t.get("plasma_density_m3", 1.85)
             )
 
     @strawberry.field
@@ -120,7 +135,8 @@ class QueryGQL:
                     stray_capacitance_pf=t["stray_capacitance_pf"],
                     capacitance_shift_rate_pf_per_s=t["capacitance_shift_rate_pf_per_s"],
                     normal_zone_propagation_velocity_mps=t["normal_zone_propagation_velocity_mps"],
-                    quench_detected=t["quench_detected"]
+                    quench_detected=t["quench_detected"],
+                    plasma_density_m3=t.get("plasma_density_m3", 1.85)
                 ) for t in items
             ]
 
@@ -136,7 +152,17 @@ class QueryGQL:
                 plasma_beta_toroidal=dt["plasma_beta_toroidal"],
                 magnetic_axis_displacement_m=dt["magnetic_axis_displacement_m"],
                 pinn_loss=dt["pinn_loss"],
-                equilibrium_converged=dt["equilibrium_converged"]
+                equilibrium_converged=dt["equilibrium_converged"],
+                scientific_gain_q_sci=dt.get("scientific_gain_q_sci", 10.2),
+                engineering_gain_q_eng=dt.get("engineering_gain_q_eng", 2.1),
+                fusion_power_mw=dt.get("fusion_power_mw", 255.0),
+                heating_power_mw=dt.get("heating_power_mw", 25.0),
+                gross_electric_power_mw=dt.get("gross_electric_power_mw", 106.4),
+                net_electric_power_mw=dt.get("net_electric_power_mw", 56.2),
+                recirculating_power_mw=dt.get("recirculating_power_mw", 41.6),
+                parasitic_cryo_power_mw=dt.get("parasitic_cryo_power_mw", 8.5),
+                lawson_triple_product_kev_s_m3=dt.get("lawson_triple_product_kev_s_m3", 4.8),
+                net_electricity_achieved=dt.get("net_electricity_achieved", True)
             )
 
 graphql_schema = strawberry.Schema(query=QueryGQL)
@@ -147,12 +173,28 @@ graphql_app = GraphQLRouter(graphql_schema)
 # ============================================================================
 
 app = FastAPI(
-    title="Proxima Fusion - TAMI Agentic AI Data Lake API",
-    description="Purdue Level 4/5 Enterprise API for Multi-Physics Training, HDF5 Persistence & Real-time Diagnostic Queries",
-    version="1.0.0"
+    title="SKHY - TAMI Agentic AI Data Lake API",
+    description="Purdue Level 4/5 Enterprise API for Multi-Physics Training, Plant Power Balance, HDF5 Persistence & Real-time Diagnostic Queries",
+    version="2.0.0"
 )
 
 app.include_router(graphql_app, prefix="/graphql")
+
+# Mount tutorial viewer static files
+TUTORIAL_VIEWER_DIR = os.path.join(ROOT_DIR, "tutorial_viewer")
+if os.path.exists(TUTORIAL_VIEWER_DIR):
+    app.mount("/tutorial", StaticFiles(directory=TUTORIAL_VIEWER_DIR, html=True), name="tutorial")
+
+@app.get("/")
+def read_root():
+    return RedirectResponse(url="/tutorial")
+
+@app.get("/TUTORIAL.md")
+def get_tutorial_md():
+    tutorial_path = os.path.join(ROOT_DIR, "TUTORIAL.md")
+    if os.path.exists(tutorial_path):
+        return FileResponse(tutorial_path, media_type="text/markdown")
+    raise HTTPException(status_code=404, detail="TUTORIAL.md not found")
 
 @app.on_event("startup")
 def startup_event():
@@ -169,8 +211,8 @@ def udp_telemetry_listener():
     while True:
         try:
             data, _ = sock.recvfrom(65536)
-            diag = QuenchDiagnostic()
             try:
+                diag = QuenchDiagnostic()
                 diag.ParseFromString(data)
                 record = {
                     "timestamp_ns": diag.envelope.timestamp_ns,
@@ -182,7 +224,8 @@ def udp_telemetry_listener():
                     "stray_capacitance_pf": diag.stray_capacitance_pf,
                     "capacitance_shift_rate_pf_per_s": diag.capacitance_shift_rate_pf_per_s,
                     "normal_zone_propagation_velocity_mps": diag.normal_zone_propagation_velocity_mps,
-                    "quench_detected": diag.quench_detected
+                    "quench_detected": diag.quench_detected,
+                    "plasma_density_m3": diag.plasma_density_m3
                 }
 
                 with buffer_lock:
@@ -198,7 +241,32 @@ def udp_telemetry_listener():
                 persist_telemetry_to_hdf5(record)
 
             except Exception:
-                pass
+                # Try decoding DigitalTwinState
+                twin = DigitalTwinState()
+                twin.ParseFromString(data)
+                record_twin = {
+                    "simulation_step": twin.simulation_step,
+                    "peak_coil_strain_mpa": twin.peak_coil_strain_mpa,
+                    "plasma_beta_toroidal": twin.plasma_beta_toroidal,
+                    "magnetic_axis_displacement_m": twin.magnetic_axis_displacement_m,
+                    "pinn_loss": twin.pinn_loss,
+                    "equilibrium_converged": twin.equilibrium_converged,
+                    "scientific_gain_q_sci": twin.scientific_gain_q_sci,
+                    "engineering_gain_q_eng": twin.engineering_gain_q_eng,
+                    "fusion_power_mw": twin.fusion_power_mw,
+                    "heating_power_mw": twin.heating_power_mw,
+                    "gross_electric_power_mw": twin.gross_electric_power_mw,
+                    "net_electric_power_mw": twin.net_electric_power_mw,
+                    "recirculating_power_mw": twin.recirculating_power_mw,
+                    "parasitic_cryo_power_mw": twin.parasitic_cryo_power_mw,
+                    "lawson_triple_product_kev_s_m3": twin.lawson_triple_product_kev_s_m3,
+                    "net_electricity_achieved": twin.net_electricity_achieved
+                }
+                with buffer_lock:
+                    digital_twin_buffer.append(record_twin)
+                    if len(digital_twin_buffer) > 200:
+                        digital_twin_buffer.pop(0)
+
         except Exception as e:
             time.sleep(0.1)
 
@@ -210,6 +278,7 @@ def get_health():
         "iec62443_compliance": "ZONE_5_ISOLATED_READ_ONLY_API",
         "buffer_size": len(telemetry_buffer),
         "quench_events_logged": len(quench_events_buffer),
+        "digital_twin_frames": len(digital_twin_buffer),
         "hdf5_storage": HDF5_FILE_PATH
     }
 
@@ -220,10 +289,25 @@ def get_latest_telemetry():
             raise HTTPException(status_code=404, detail="No telemetry frames ingested yet")
         return telemetry_buffer[-1]
 
-@app.get("/api/v1/telemetry/history")
-def get_telemetry_history(limit: int = Query(default=100, le=500)):
+@app.get("/api/v1/digital-twin/latest")
+def get_latest_digital_twin():
     with buffer_lock:
-        return telemetry_buffer[-limit:]
+        if not digital_twin_buffer:
+            # Default nominal response
+            return {
+                "simulation_step": 1,
+                "scientific_gain_q_sci": 10.2,
+                "engineering_gain_q_eng": 2.14,
+                "fusion_power_mw": 255.0,
+                "heating_power_mw": 25.0,
+                "gross_electric_power_mw": 106.4,
+                "net_electric_power_mw": 56.3,
+                "recirculating_power_mw": 41.66,
+                "parasitic_cryo_power_mw": 8.5,
+                "lawson_triple_product_kev_s_m3": 4.85,
+                "net_electricity_achieved": True
+            }
+        return digital_twin_buffer[-1]
 
 @app.get("/api/v1/quench-events")
 def get_quench_events():

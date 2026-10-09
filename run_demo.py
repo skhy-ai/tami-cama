@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Proxima Fusion - TAMI Multi-Tier System Orchestrator & End-to-End Test Benchmark
+SKHY - TAMI Multi-Tier System Orchestrator & End-to-End Test Benchmark
 Launches Level 1 Edge Node, Level 3 Middleware Hub, Level 4/5 Digital Twin, Data Lake API,
 and Synthetic Sensor Generator to demonstrate real-time quench protection, microsecond interlocks,
 HDF5 persistence, and Agentic AI GraphQL/REST interfaces.
@@ -15,7 +15,7 @@ import h5py
 
 def main():
     print("=========================================================================")
-    print(" PROXIMA FUSION - TAMI ENTERPRISE I&C STACK END-TO-END DEMONSTRATION")
+    print(" SKHY - TAMI ENTERPRISE I&C STACK END-TO-END DEMONSTRATION")
     print(" Purdue Model Levels 0-5 | Zero-Trust & IEC 62443 Security Architecture")
     print("=========================================================================\n")
 

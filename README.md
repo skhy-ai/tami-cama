@@ -90,11 +90,29 @@ c:\Projects\tami-cama\
 │   └── synthetic_data_gen.py             # 100 Hz simulation with triggerable REBCO quench runaway
 ├── digital_twin/                         # Purdue Level 4/5 Surrogate Engine (Python / PyTorch)
 │   └── digital_twin_engine.py            # PINN surrogate reconstructing 3D flux mesh & MHD parameters
-├── data_lake_api/                        # Purdue Level 4/5 Data Lake API & GraphQL (Python / FastAPI)
-│   └── ai_ingestion_api.py               # HDF5 persistence (`tami_data_lake.h5`), REST & Strawberry GraphQL endpoints
+├── tutorial_viewer/                     # Interactive Web Tutorial & Quench Simulator
+│   ├── index.html                        # Glassmorphic UI dashboard
+│   ├── style.css                         # Dark theme design system
+│   └── app.js                            # Interactive simulator logic & 3D torus canvas
+├── run_tutorial.py                       # One-click launcher for Tutorial Viewer
 ├── run_demo.py                           # Master end-to-end demonstrator and orchestrator script
+├── TUTORIAL.md                           # Comprehensive beginner tutorial with Mermaid diagrams
+├── .gitignore                            # Clean ignores for Rust/Python/HDF5 build artifacts
 └── README.md
 ```
+
+---
+
+## 🎓 Beginner Tutorial & Interactive Web Viewer
+
+If you are new to nuclear fusion or real-time control software:
+
+1. **Step-by-Step Written Guide**: Read [TUTORIAL.md](file:///c:/Projects/tami-cama/TUTORIAL.md) for a comprehensive explanation of fusion energy, stellarators, REBCO superconductor magnets, quench physics, and the 6 Purdue levels with Mermaid diagrams.
+2. **Interactive Visual Tutorial Viewer**: Launch the interactive web dashboard with live quench sliders and 3D stellarator flux surface rendering:
+   ```bash
+   python run_tutorial.py
+   ```
+   Or visit `http://127.0.0.1:8000/tutorial` while the API service is active.
 
 ---
 
@@ -108,31 +126,37 @@ python run_demo.py
 
 ### Running Components Individually
 
-1. **Level 1 Edge Protection Module (Rust)**:
+1. **Interactive Tutorial Viewer & Quench Simulator**:
+   ```bash
+   python run_tutorial.py
+   ```
+
+2. **Level 1 Edge Protection Module (Rust)**:
    ```bash
    cd edge_quench
-   cargo run --release
+   cargo run
    ```
 
-2. **Level 3 Supervisory Middleware Hub (Rust)**:
+3. **Level 3 Supervisory Middleware Hub (Rust)**:
    ```bash
    cd middleware_hub
-   cargo run --release
+   cargo run
    ```
 
-3. **Level 4/5 Data Lake API (Python / FastAPI)**:
+4. **Level 4/5 Data Lake API & Tutorial Server (Python / FastAPI)**:
    ```bash
    python data_lake_api/ai_ingestion_api.py
    ```
+   - Interactive Tutorial: `http://127.0.0.1:8000/tutorial`
    - REST API Docs: `http://127.0.0.1:8000/docs`
    - GraphQL Playground: `http://127.0.0.1:8000/graphql`
 
-4. **Level 4/5 Digital Twin PINN Engine (PyTorch)**:
+5. **Level 4/5 Digital Twin PINN Engine (PyTorch)**:
    ```bash
    python digital_twin/digital_twin_engine.py
    ```
 
-5. **Level 0/1 Synthetic Telemetry Generator (Python)**:
+6. **Level 0/1 Synthetic Telemetry Generator (Python)**:
    ```bash
    python synthetic_generator/synthetic_data_gen.py --freq 100.0 --quench-after 3.0
    ```

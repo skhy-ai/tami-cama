@@ -2,7 +2,7 @@
 name = "middleware_hub"
 version = "0.1.0"
 edition = "2021"
-authors = ["Proxima Fusion Systems Software Architecture Team"]
+authors = ["SKHY Systems Software Architecture Team"]
 description = "TAMI Purdue Level 3 Supervisory Control Middleware & Kafka/DDS Bridge"
 
 [dependencies]

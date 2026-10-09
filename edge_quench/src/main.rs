@@ -2,11 +2,11 @@ use std::net::UdpSocket;
 use std::time::Instant;
 use prost::Message;
 
-pub mod proxima_telemetry {
-    include!(concat!(env!("OUT_DIR"), "/proxima.telemetry.rs"));
+pub mod skhy_telemetry {
+    include!(concat!(env!("OUT_DIR"), "/skhy.telemetry.rs"));
 }
 
-use proxima_telemetry::{
+use skhy_telemetry::{
     QuenchDiagnostic, MacroStateCommand, SystemState,
 };
 
@@ -16,7 +16,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     log::info!("=========================================================================");
-    log::info!(" PROXIMA FUSION - LEVEL 1 EDGE QUENCH PROTECTION MODULE (MTCA.4 FPGA)");
+    log::info!(" SKHY - LEVEL 1 EDGE QUENCH PROTECTION MODULE (MTCA.4 FPGA)");
     log::info!(" Safety Architecture: IEC 62443 Level 1 Direct Safety Interlock Zone");
     log::info!(" Input Conduit: High-Frequency Sensor Stream (UDP 9003)");
     log::info!(" Hardware Target: HTS Fast Discharge Breaker & Magnet Energy Dump Switch");
