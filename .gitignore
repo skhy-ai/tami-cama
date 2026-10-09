@@ -1,0 +1,50 @@
+# Rust build artifacts
+target/
+target_edge/
+target_middleware/
+**/target/
+**/*.rs.bk
+*.pdb
+
+# Python build & bytecode artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Data Lake HDF5 storage & Log files
+*.h5
+*.log
+tami_data_lake.h5
+
+# OS & Editor generated files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node / Web artifacts
+node_modules/
+dist/
+.dist/

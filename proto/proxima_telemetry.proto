@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package proxima.telemetry;
+
+// ============================================================================
+// Proxima Fusion - TAMI (Telemetry, Analytics, Monitoring, & Integration)
+// Telemetry & Control Schema Definitions v1.0
+//
+// IEC 62443 Safety & Security Boundary Annotations:
+// - Level 0/1: Physical Sensors & Direct Microsecond Quench Dump Logic (Edge Conduit)
+// - Level 2: Area Control & Programmable Logic Controllers (Deterministic DDS Zone)
+// - Level 3: TAMI Middleware Hub (Supervisory Control & Bridge Conduit to Enterprise)
+// - Level 4: Digital Twin, Data Lake Ingestion & HDF5/IMAS Persistence
+// - Level 5: Enterprise Agentic AI API & Multi-Physics Training Services
+// ============================================================================
+
+enum PurdueLevel {
+  LEVEL_0_PROCESS = 0;
+  LEVEL_1_BASIC_CONTROL = 1;
+  LEVEL_2_AREA_CONTROL = 2;
+  LEVEL_3_SUPERVISORY = 3;
+  LEVEL_4_PLANT_MANAGEMENT = 4;
+  LEVEL_5_ENTERPRISE_AI = 5;
+}
+
+enum PayloadType {
+  PAYLOAD_UNKNOWN = 0;
+  PAYLOAD_QUENCH_DIAGNOSTIC = 1;
+  PAYLOAD_DIGITAL_TWIN_STATE = 2;
+  PAYLOAD_MACRO_STATE_COMMAND = 3;
+}
+
+enum QuenchSeverity {
+  SEVERITY_NOMINAL = 0;
+  SEVERITY_WARNING = 1;
+  SEVERITY_CRITICAL_RUNAWAY = 2;
+}
+
+enum SystemState {
+  STATE_OFF = 0;
+  STATE_COOL_DOWN = 1;
+  STATE_ENERGIZE_COILS = 2;
+  STATE_PLASMA_BREAKDOWN = 3;
+  STATE_STEADY_STATE_BURN = 4;
+  STATE_RAMP_DOWN = 5;
+  STATE_EMERGENCY_QUENCH_DUMP = 6;
+}
+
+// Security & Routing Header attached to all TAMI telemetry
+message Envelope {
+  uint64 timestamp_ns = 1;         // Nanoseconds since UNIX epoch (PTP / IEEE 1588 synchronized)
+  string source_id = 2;            // Sub-rack / Sensor Node ID (e.g., "MTCA4-CHASSIS-04-SLOT-02")
+  PurdueLevel purdue_level = 3;     // Originating Purdue Level
+  string security_token = 4;       // Zero-Trust HMAC-SHA256 digest / TLS 1.3 session token
+  uint64 sequence_number = 5;      // Monotonically increasing sequence number per source
+  PayloadType payload_type = 6;    // Payload discriminator for fast zero-copy routing
+}
+
+// Fiber-Optic Acoustic Sensing (FOAS) & Stray Capacitance Quench Telemetry
+message QuenchDiagnostic {
+  Envelope envelope = 1;
+  string sensor_id = 2;                       // Fiber segment or capacitive tile ID (e.g. "FOAS-HTS-COIL-03A")
+  double localized_temperature_k = 3;         // Localized temperature in Kelvin (REBCO T_c ~90K)
+  double thermal_rise_rate_k_per_s = 4;       // Localized temperature rise rate (dT/dt in K/s)
+  double foas_acoustic_frequency_hz = 5;      // Detected acoustic emission burst frequency (Hz)
+  double foas_acoustic_amplitude_db = 6;      // Acoustic stress amplitude in dB
+  double stray_capacitance_pf = 7;            // Stray capacitance probe value in picofarads
+  double capacitance_shift_rate_pf_per_s = 8; // Capacitance shift rate (dC/dt in pF/s)
+  double normal_zone_propagation_velocity_mps = 9; // NZPV (m/s) - slow REBCO 0.01 - 0.1 m/s
+  bool quench_detected = 10;                  // Anomaly decision bit
+  QuenchSeverity severity = 11;               // Classification severity
+}
+
+// Real-Time 3D Magnetic Flux Surface Reconstruction & Thermal Digital Twin
+message DigitalTwinState {
+  Envelope envelope = 1;
+  uint64 simulation_step = 2;                  // Discrete PINN/surrogate calculation step index
+  repeated double magnetic_flux_surface_r = 3; // Radial coordinates of 3D flux surface mesh (m)
+  repeated double magnetic_flux_surface_z = 4; // Vertical coordinates of 3D flux surface mesh (m)
+  repeated double magnetic_flux_surface_phi = 5;// Toroidal angle coordinates (rad)
+  repeated double localized_thermal_loads_k = 6;// Spatial thermal distribution across HTS tiles (K)
+  double peak_coil_strain_mpa = 7;             // Maximum mechanical stress load on magnet casing (MPa)
+  double plasma_beta_toroidal = 8;             // Volume-averaged toroidal beta parameter
+  double magnetic_axis_displacement_m = 9;     // Axis shift relative to QI equilibrium (m)
+  bool equilibrium_converged = 10;            // Convergence status of V3FIT / PINN model
+  double pinn_loss = 11;                       // Current physics-informed residual loss
+}
+
+// Supervisory Control Command (Level 3 -> Level 2/1)
+message MacroStateCommand {
+  Envelope envelope = 1;
+  SystemState target_state = 2;                // Requested macro system state
+  string executing_authority = 3;              // Authority ID (e.g., "SUPERVISORY-TAMI-MAIN")
+  string command_id = 4;                       // Unique UUID for command tracking
+  uint64 override_timeout_ms = 5;              // Expiration window for real-time interlocks
+  string reason = 6;                           // Justification (e.g., "AUTOMATED_QUENCH_INTERLOCK_TRIGGERED")
+}

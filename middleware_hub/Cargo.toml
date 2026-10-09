@@ -1,0 +1,20 @@
+[package]
+name = "middleware_hub"
+version = "0.1.0"
+edition = "2021"
+authors = ["Proxima Fusion Systems Software Architecture Team"]
+description = "TAMI Purdue Level 3 Supervisory Control Middleware & Kafka/DDS Bridge"
+
+[dependencies]
+prost = "0.13"
+tokio = { version = "1.38", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+bytes = "1.6"
+chrono = "0.4"
+log = "0.4"
+env_logger = "0.11"
+
+[build-dependencies]
+prost-build = "0.13"
+protoc-bin-vendored = "3.0"
