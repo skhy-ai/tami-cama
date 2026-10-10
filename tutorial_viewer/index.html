@@ -15,6 +15,9 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <!-- Mermaid CDN for client-side diagram rendering -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <!-- Three.js & OrbitControls for 3D Reactor Twin & Visual FX -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="dark-theme">
@@ -26,19 +29,59 @@
                 <div class="logo-icon">⚡</div>
                 <div class="logo-text">
                     <span class="brand-name">SKHY</span>
-                    <span class="app-subtitle">TAMI Interactive Architecture & Fusion Tutorial</span>
+                    <span class="app-subtitle">TAMI Multi-Reactor Digital Twin & I&C Control Stack</span>
                 </div>
             </div>
             <nav class="nav-links">
-                <button class="nav-btn active" data-tab="interactive-sim">Quench Simulator</button>
+                <button class="nav-btn active" data-tab="interactive-sim">Edge Interlock Simulator</button>
                 <button class="nav-btn" data-tab="subsystems-twin">Subsystems & Modes Twin</button>
-                <button class="nav-btn" data-tab="power-balance">Scientific Gain (Q_sci) Plant</button>
+                <button class="nav-btn" data-tab="power-balance">2D Energy Diagram (Sankey)</button>
                 <button class="nav-btn" data-tab="purdue-explorer">Purdue 6-Tier Architecture</button>
-                <button class="nav-btn" data-tab="pinn-twin">3D PINN Digital Twin</button>
+                <button class="nav-btn" data-tab="pinn-twin">3D Three.js Digital Twin</button>
                 <button class="nav-btn" data-tab="guide-doc">Beginner Guide & Diagrams</button>
             </nav>
         </div>
     </header>
+
+    <!-- Global Fusion Reactor Selector Bar -->
+    <div class="reactor-selector-bar">
+        <div class="reactor-selector-container">
+            <div class="selector-title-group">
+                <span class="selector-label">FUSION CONFINEMENT TOPOLOGY:</span>
+                <span class="selector-sub">Select Architecture for 3D Twin, 2D Energy Balance & I&C Telemetry</span>
+            </div>
+            <div class="reactor-buttons-group">
+                <button class="reactor-btn active" data-reactor="REACTOR_QI_STELLARATOR" id="btn-reactor-stellarator">
+                    <span class="r-icon">🌀</span>
+                    <div class="r-info">
+                        <span class="r-name">QI Stellarator</span>
+                        <span class="r-desc">3D Non-Planar HTS Coils • Disruption-Free Flattop</span>
+                    </div>
+                    <span class="r-tag tag-stellarator">Steady-State</span>
+                </button>
+                <button class="reactor-btn" data-reactor="REACTOR_TOKAMAK" id="btn-reactor-tokamak">
+                    <span class="r-icon">🍩</span>
+                    <div class="r-info">
+                        <span class="r-name">Advanced Tokamak</span>
+                        <span class="r-desc">Central Solenoid • Ip=15 MA • D-Coils • H-Mode</span>
+                    </div>
+                    <span class="r-tag tag-tokamak">Inductive</span>
+                </button>
+                <button class="reactor-btn" data-reactor="REACTOR_ICF" id="btn-reactor-icf">
+                    <span class="r-icon">💥</span>
+                    <div class="r-info">
+                        <span class="r-name">Inertial Confinement (ICF)</span>
+                        <span class="r-desc">Pulsed 2.15 MJ UV Lasers • 5 Hz • G=85 DT Target</span>
+                    </div>
+                    <span class="r-tag tag-icf">Pulsed Microimplosions</span>
+                </button>
+            </div>
+            <div class="active-reactor-pill" id="active-reactor-pill">
+                <span class="pulse-dot"></span>
+                <span id="active-reactor-pill-text">QI Modular Stellarator Active</span>
+            </div>
+        </div>
+    </div>
 
     <main class="main-content">
         
@@ -448,39 +491,125 @@ stateDiagram-v2
             </div>
         </section>
 
-        <!-- SECTION: Fusion Power Balance & Scientific Gain Q_sci Simulator -->
+        <!-- SECTION: Fusion Power Balance & 2D Sankey Energy Flow Diagram -->
         <section id="power-balance" class="tab-pane">
             <div class="section-header">
-                <h2>⚛️ Fusion Power Plant & Scientific Gain ($Q_{\text{sci}}$) Simulator</h2>
-                <p class="section-desc">Based on Sam Wurzel's <a href="https://www.fusionenergybase.com/articles/fusion-physics-part-1-scientific-gain-and-fusion-power-plants" target="_blank">Scientific Gain and Fusion Power Plants</a>. Adjust $Q_{\text{sci}}$ and efficiencies to see net electricity delivered to the grid.</p>
+                <h2>⚛️ 2D Interactive Fusion Power Plant & Sankey Energy Flow Simulator</h2>
+                <p class="section-desc">Modeled after <a href="https://www.fusionenergybase.com/fusion-power-plant-simulator" target="_blank">Fusion Energy Base Power Plant Simulator</a>. Analyze recirculating power flows, thermal-to-electric conversion, and net grid electricity export for Steady-State Magnetic and Pulsed Inertial systems.</p>
             </div>
 
-            <div class="simulator-grid">
-                <!-- Controls -->
-                <div class="card glass-card">
-                    <h3>Power Plant Parameters</h3>
+            <!-- Top Regime & Fuel Bar -->
+            <div class="card glass-card sankey-top-controls">
+                <div class="sankey-regime-toggle">
+                    <span class="ctrl-heading">OPERATION REGIME:</span>
+                    <div class="toggle-btn-group">
+                        <button class="toggle-btn active" id="btn-regime-steady" data-regime="steady">
+                            <span>⚡</span> Continuous Steady-State (MW)
+                        </button>
+                        <button class="toggle-btn" id="btn-regime-pulsed" data-regime="pulsed">
+                            <span>💥</span> Pulsed Driver (MJ & Rep-Rate)
+                        </button>
+                    </div>
+                </div>
 
-                    <div class="control-group">
-                        <label for="qsci-slider">
-                            Scientific Gain ($Q_{\text{sci}} = P_{\text{fusion}} / P_{\text{heating}}$)
-                            <span class="val-badge" id="qsci-val">10.0</span>
-                        </label>
-                        <input type="range" id="qsci-slider" min="0.1" max="25.0" value="10.0" step="0.1">
-                        <div class="slider-labels">
-                            <span class="critical-mark">Q=1.0 (Scientific Breakeven)</span>
-                            <span class="warning-mark">Q=5.0</span>
-                            <span class="highlight-green">Q=10.0 (Commercial Goal)</span>
+                <div class="sankey-fuel-select">
+                    <span class="ctrl-heading">FUSION FUEL CYCLE:</span>
+                    <div class="toggle-btn-group">
+                        <button class="toggle-btn active" id="btn-fuel-dt" data-fuel="DT">D-T (17.6 MeV • 80% n)</button>
+                        <button class="toggle-btn" id="btn-fuel-dd" data-fuel="DD">D-D (Catalyzed • 66% n)</button>
+                        <button class="toggle-btn" id="btn-fuel-pb" data-fuel="PB11">p-¹¹B (Aneutronic • 0.1% n)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2D Sankey Diagram Canvas Card -->
+            <div class="card glass-card sankey-canvas-card">
+                <div class="sankey-canvas-header">
+                    <div class="sankey-title-group">
+                        <span class="sankey-canvas-title">PLANT ENERGY FLOW (SANKEY DIAGRAM)</span>
+                        <span class="sankey-live-mode" id="sankey-mode-label">Regime: Steady-State Magnetic Confinement • D-T Cycle</span>
+                    </div>
+                    <div class="sankey-legend">
+                        <span class="legend-item"><span class="legend-color bg-orange"></span> Heating / Driver</span>
+                        <span class="legend-item"><span class="legend-color bg-cyan"></span> Fusion Yield</span>
+                        <span class="legend-item"><span class="legend-color bg-teal"></span> Thermal / Electric</span>
+                        <span class="legend-item"><span class="legend-color bg-amber"></span> Recirculating</span>
+                        <span class="legend-item"><span class="legend-color bg-green"></span> Net Grid Export</span>
+                    </div>
+                </div>
+
+                <div class="sankey-viewport-container">
+                    <canvas id="sankey-canvas" width="1020" height="460"></canvas>
+                </div>
+
+                <!-- Live Power Balance Status Banner -->
+                <div class="status-indicator-box sankey-status-banner" id="power-status-box">
+                    <div class="status-dot green-pulse" id="power-status-dot"></div>
+                    <div class="status-info">
+                        <div class="status-title" id="power-status-title">NET ELECTRICITY DELIVERED: +56.3 MW</div>
+                        <div class="status-sub" id="power-status-sub">Commercial Surplus to Power Grid! Engineering Gain Q_eng = 2.14</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Parameter Sliders & Metrics Breakdown Grid -->
+            <div class="simulator-grid sankey-controls-grid">
+                <!-- Controls Card -->
+                <div class="card glass-card">
+                    <h3>Plant Parameter Controls</h3>
+
+                    <!-- Steady-State Parameter Group -->
+                    <div id="steady-controls-group">
+                        <div class="control-group">
+                            <label for="qsci-slider">
+                                Scientific Gain ($Q_{\text{sci}} = P_{\text{fusion}} / P_{\text{heating}}$)
+                                <span class="val-badge" id="qsci-val">10.0</span>
+                            </label>
+                            <input type="range" id="qsci-slider" min="0.1" max="30.0" value="10.0" step="0.1">
+                            <div class="slider-labels">
+                                <span class="critical-mark">Q=1.0 (Breakeven)</span>
+                                <span class="warning-mark">Q=5.0</span>
+                                <span class="highlight-green">Q=10.0 (Commercial)</span>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="pheat-slider">
+                                Heating Power Entering Core ($P_{\text{heating}}$)
+                                <span class="val-badge" id="pheat-val">25 MW</span>
+                            </label>
+                            <input type="range" id="pheat-slider" min="5" max="100" value="25" step="1">
                         </div>
                     </div>
 
-                    <div class="control-group">
-                        <label for="pheat-slider">
-                            Heating Power Entering Plasma ($P_{\text{heating}}$)
-                            <span class="val-badge" id="pheat-val">25 MW</span>
-                        </label>
-                        <input type="range" id="pheat-slider" min="5" max="100" value="25" step="1">
+                    <!-- Pulsed ICF Parameter Group -->
+                    <div id="pulsed-controls-group" style="display: none;">
+                        <div class="control-group">
+                            <label for="elaser-slider">
+                                Driver Laser Energy per Shot ($E_{\text{laser}}$)
+                                <span class="val-badge" id="elaser-val">2.15 MJ</span>
+                            </label>
+                            <input type="range" id="elaser-slider" min="0.5" max="5.0" value="2.15" step="0.05">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="frep-slider">
+                                Shot Repetition Rate ($f_{\text{rep}}$)
+                                <span class="val-badge" id="frep-val">5.0 Hz</span>
+                            </label>
+                            <input type="range" id="frep-slider" min="1.0" max="15.0" value="5.0" step="0.5">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="targetgain-slider">
+                                Target Pellet Gain ($G = E_{\text{fusion}} / E_{\text{laser}}$)
+                                <span class="val-badge" id="targetgain-val">85.0</span>
+                            </label>
+                            <input type="range" id="targetgain-slider" min="1.0" max="150.0" value="85.0" step="1.0">
+                        </div>
                     </div>
 
+                    <!-- Common Plant Efficiencies -->
                     <div class="control-group">
                         <label for="etath-slider">
                             Thermal-to-Electric Conversion ($\eta_{\text{thermal}}$)
@@ -488,35 +617,47 @@ stateDiagram-v2
                         </label>
                         <input type="range" id="etath-slider" min="20" max="55" value="38" step="1">
                         <div class="slider-labels">
-                            <span>30% (Standard Steam)</span>
-                            <span>45% (Advanced Cycle)</span>
+                            <span>30% (Steam)</span>
+                            <span>45% (sCO2 / Brayton)</span>
                         </div>
                     </div>
 
                     <div class="control-group">
                         <label for="etaheat-slider">
-                            Heating System Efficiency ($\eta_{\text{heating}}$)
+                            Driver / Heating Efficiency ($\eta_{\text{driver}}$)
                             <span class="val-badge" id="etaheat-val">60%</span>
                         </label>
-                        <input type="range" id="etaheat-slider" min="10" max="80" value="60" step="1">
+                        <input type="range" id="etaheat-slider" min="5" max="80" value="60" step="1">
                         <div class="slider-labels">
-                            <span>10% (Lasers)</span>
-                            <span>60% (RF/Microwave)</span>
+                            <span>15% (ICF Laser)</span>
+                            <span>60% (RF / ECRH)</span>
                         </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="blanketm-slider">
+                            Blanket Energy Multiplier ($M$)
+                            <span class="val-badge" id="blanketm-val">1.15</span>
+                        </label>
+                        <input type="range" id="blanketm-slider" min="1.00" max="1.35" value="1.15" step="0.01">
+                        <div class="slider-labels">
+                            <span>1.00 (No Mult)</span>
+                            <span>1.15 (Li-6 Exothermic D-T)</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="paux-slider">
+                            Cryogenic & Auxiliary Loads ($P_{\text{aux}}$)
+                            <span class="val-badge" id="paux-val">10.0 MW</span>
+                        </label>
+                        <input type="range" id="paux-slider" min="2" max="30" value="10" step="0.5">
                     </div>
                 </div>
 
-                <!-- Live Power Flow Diagram & Grid Output -->
+                <!-- Power Summary & Breakdown Table -->
                 <div class="card glass-card">
-                    <h3>Plant Power Balance Output</h3>
-
-                    <div class="status-indicator-box" id="power-status-box">
-                        <div class="status-dot green-pulse" id="power-status-dot"></div>
-                        <div class="status-info">
-                            <div class="status-title" id="power-status-title">NET ELECTRICITY DELIVERED: +56.3 MW</div>
-                            <div class="status-sub" id="power-status-sub">Commercial Surplus to Power Grid!</div>
-                        </div>
-                    </div>
+                    <h3>Power Balance Breakdown</h3>
 
                     <div class="metrics-grid">
                         <div class="metric-box">
@@ -524,29 +665,37 @@ stateDiagram-v2
                             <span class="metric-value highlight-gold" id="pfusion-val">250.0 MW</span>
                         </div>
                         <div class="metric-box">
-                            <span class="metric-label">Total Exiting Power ($P_{\text{exit}}$)</span>
-                            <span class="metric-value" id="pexit-val">275.0 MW</span>
+                            <span class="metric-label">Total Thermal ($P_{\text{thermal}}$)</span>
+                            <span class="metric-value" id="pexit-val">312.5 MW</span>
                         </div>
                         <div class="metric-box">
-                            <span class="metric-label">Gross Electricity ($P_{\text{gross}}$)</span>
-                            <span class="metric-value highlight-cyan" id="pgross-val">104.5 MW</span>
+                            <span class="metric-label">Gross Electric ($P_{\text{gross}}$)</span>
+                            <span class="metric-value highlight-cyan" id="pgross-val">118.8 MW</span>
                         </div>
                         <div class="metric-box">
-                            <span class="metric-label">Recirculating Power ($P_{\text{recirc}}$)</span>
-                            <span class="metric-value" id="precirc-val">41.7 MW</span>
+                            <span class="metric-label">Driver Input ($P_{\text{driver,elec}}$)</span>
+                            <span class="metric-value" id="pdriver-elec-val">41.7 MW</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Total Recirculating ($P_{\text{recirc}}$)</span>
+                            <span class="metric-value highlight-gold" id="precirc-val">51.7 MW</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Net Grid Export ($P_{\text{net}}$)</span>
+                            <span class="metric-value highlight-green" id="pnet-val">+67.1 MW</span>
                         </div>
                         <div class="metric-box">
                             <span class="metric-label">Engineering Gain ($Q_{\text{eng}}$)</span>
-                            <span class="metric-value highlight-green" id="qeng-val">2.08</span>
+                            <span class="metric-value highlight-green" id="qeng-val">2.30</span>
                         </div>
                         <div class="metric-box">
                             <span class="metric-label">Recirculating Fraction</span>
-                            <span class="metric-value" id="recirc-frac-val">39.9%</span>
+                            <span class="metric-value" id="recirc-frac-val">43.5%</span>
                         </div>
                     </div>
 
-                    <div class="info-box-pinn">
-                        <p><strong>Physics Insight (Sam Wurzel Framework):</strong> At $Q_{\text{sci}} = 1.0$, $P_{\text{fusion}} = P_{\text{heating}}$. However, because converting electricity to heat ($\eta_{\text{heating}}$) and heat to electricity ($\eta_{\text{thermal}}$) has losses, $Q_{\text{sci}}$ must exceed <strong>$\sim 4.0\text{--}8.0$</strong> before the plant generates even 1 Watt of net grid power!</p>
+                    <div class="info-box-pinn" style="margin-top: 18px;">
+                        <p><strong>Physics Insight (FEB Simulator Foundation):</strong> Even when scientific breakeven ($Q_{\text{sci}} = 1.0$) is reached, the plant requires significant electrical recirculating power. For a commercial power plant with a driver efficiency of $\eta_d \approx 15\text{--}60\%$ and thermal efficiency of $\eta_{\text{th}} \approx 38\%$, the engineering breakeven requires $Q_{\text{sci}} > \frac{1}{\eta_d \eta_{\text{th}}} \approx 4.5\text{--}17.5$!</p>
                     </div>
                 </div>
             </div>
@@ -605,8 +754,8 @@ stateDiagram-v2
                     <div class="purdue-card level-0" data-level="0">
                         <div class="level-badge">LEVEL 0</div>
                         <div class="level-content">
-                            <h4>Physical Stellarator Hardware & Sensors</h4>
-                            <p>REBCO HTS Coils, FOAS Strain Fiber Cables, Stray Capacitance Probes</p>
+                            <h4>Physical Reactor Hardware & Instrumentation</h4>
+                            <p>REBCO HTS Coils, TF/CS Magnets, Laser Amplifiers, FOAS Fiber Strain Probes</p>
                         </div>
                     </div>
                 </div>
@@ -621,48 +770,105 @@ stateDiagram-v2
             </div>
         </section>
 
-        <!-- SECTION 3: 3D PINN Digital Twin -->
+        <!-- SECTION 3: Three.js 3D Multi-Reactor Digital Twin -->
         <section id="pinn-twin" class="tab-pane">
             <div class="section-header">
-                <h2>🧠 PyTorch Physics-Informed Neural Network (PINN) 3D Digital Twin</h2>
-                <p class="section-desc">Interactive 3D reconstruction of Quasi-Isodynamic stellarator flux surfaces and thermal distribution maps.</p>
+                <h2>🌐 Three.js WebGL 3D Fusion Digital Twin & Visual FX Studio</h2>
+                <p class="section-desc">Interactive 3D real-time simulation of magnetic coil geometries, plasma equilibrium flux surfaces, laser beam drivers, and physical failure modes across Stellarators, Tokamaks, and ICF.</p>
             </div>
 
-            <div class="digital-twin-grid">
-                <div class="card glass-card canvas-3d-card">
+            <div class="digital-twin-grid-3d">
+                <!-- 3D Viewport Card -->
+                <div class="card glass-card canvas-3d-viewport-card">
                     <div class="canvas-header-3d">
-                        <span>3D Magnetic Flux Surface Mesh (V3FIT Surrogate)</span>
-                        <span class="live-tag">LIVE RECONSTRUCTION</span>
+                        <div class="canvas-title-group">
+                            <span class="active-reactor-3d-title" id="canvas-reactor-title">3D TWIN: QI MODULAR STELLARATOR</span>
+                            <span class="active-mode-3d-subtitle" id="canvas-mode-subtitle">Mode: Steady-State Nominal Confinement</span>
+                        </div>
+                        <div class="viewport-status-pills">
+                            <span class="live-tag" id="webgl-fps-tag">60 FPS WEBGL</span>
+                            <span class="live-tag highlight-cyan">ORBIT CONTROLS ACTIVE</span>
+                        </div>
                     </div>
-                    <canvas id="canvas-3d" width="600" height="400"></canvas>
+
+                    <!-- 3D Viewport Container -->
+                    <div class="threejs-container" id="threejs-container">
+                        <!-- Floating Failure Anomaly Banner -->
+                        <div class="threejs-alert-banner" id="threejs-alert-banner" style="display: none;">
+                            <span class="alert-icon">⚠️</span>
+                            <span class="alert-text" id="threejs-alert-text">ANOMALY DETECTED: MAJOR DISRUPTION / CURRENT QUENCH</span>
+                        </div>
+
+                        <!-- Camera Preset Toolbar -->
+                        <div class="threejs-camera-hud">
+                            <span class="hud-label">CAMERA:</span>
+                            <button class="hud-btn active" data-cam="perspective" id="btn-cam-persp">Perspective</button>
+                            <button class="hud-btn" data-cam="top" id="btn-cam-top">Top View</button>
+                            <button class="hud-btn" data-cam="front" id="btn-cam-front">Front</button>
+                            <button class="hud-btn" data-cam="iso" id="btn-cam-iso">Isometric</button>
+                            <button class="hud-btn" data-cam="reset" id="btn-cam-reset">Reset</button>
+                        </div>
+
+                        <!-- Layer Visibility Toggles -->
+                        <div class="threejs-layers-hud">
+                            <span class="hud-label">LAYERS:</span>
+                            <label class="layer-checkbox">
+                                <input type="checkbox" id="layer-coils" checked>
+                                <span class="layer-name" id="layer-coils-label">Coils / Laser Beams</span>
+                            </label>
+                            <label class="layer-checkbox">
+                                <input type="checkbox" id="layer-plasma" checked>
+                                <span class="layer-name" id="layer-plasma-label">Plasma / Target</span>
+                            </label>
+                            <label class="layer-checkbox">
+                                <input type="checkbox" id="layer-divertor" checked>
+                                <span class="layer-name" id="layer-divertor-label">Divertor / Chamber</span>
+                            </label>
+                            <label class="layer-checkbox">
+                                <input type="checkbox" id="layer-heat" checked>
+                                <span class="layer-name">Thermal Heatmap</span>
+                            </label>
+                        </div>
+
+                        <!-- Interactive Instructions Badge -->
+                        <div class="threejs-hint-badge">
+                            🖱️ Left-Click: Rotate • Right-Click: Pan • Scroll: Zoom
+                        </div>
+                    </div>
                 </div>
 
+                <!-- 3D Physics Telemetry Card -->
                 <div class="card glass-card twin-stats-card">
-                    <h3>PINN Physics Parameters</h3>
-                    
-                    <div class="stat-item">
-                        <span class="stat-name">Toroidal Beta ($\beta$)</span>
-                        <span class="stat-val highlight-gold" id="twin-beta">4.25%</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-name">Magnetic Axis Shift</span>
-                        <span class="stat-val" id="twin-shift">+1.82 mm</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-name">Peak Magnet Strain</span>
-                        <span class="stat-val" id="twin-strain">142.5 MPa</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-name">PINN Residual Loss</span>
-                        <span class="stat-val highlight-green" id="twin-loss">0.00124</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-name">MHD Equilibrium Status</span>
-                        <span class="stat-val highlight-green">CONVERGED</span>
+                    <div class="twin-stats-header">
+                        <h3>Physics Telemetry HUD</h3>
+                        <span class="subsystem-badge" id="twin-topology-badge">QI-HTS</span>
                     </div>
 
-                    <div class="info-box-pinn">
-                        <p><strong>What is a PINN?</strong> A Physics-Informed Neural Network incorporates MHD plasma physics equations (Grad-Shafranov equilibrium) directly into its loss function, ensuring predictions obey physical laws.</p>
+                    <div class="twin-metrics-container" id="twin-metrics-container">
+                        <div class="stat-item">
+                            <span class="stat-name" id="stat-1-name">Toroidal Beta ($\beta$)</span>
+                            <span class="stat-val highlight-gold" id="stat-1-val">4.25%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-name" id="stat-2-name">Magnetic Axis Shift</span>
+                            <span class="stat-val" id="stat-2-val">+1.82 mm</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-name" id="stat-3-name">Peak Magnet Stress</span>
+                            <span class="stat-val" id="stat-3-val">142.5 MPa</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-name" id="stat-4-name">PINN Residual Loss</span>
+                            <span class="stat-val highlight-green" id="stat-4-val">0.00124</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-name" id="stat-5-name">Equilibrium Status</span>
+                            <span class="stat-val highlight-green" id="stat-5-val">CONVERGED</span>
+                        </div>
+                    </div>
+
+                    <div class="info-box-pinn" id="twin-info-box">
+                        <p id="twin-physics-info"><strong>Quasi-Isodynamic Optimization:</strong> Modular non-planar coils produce omnigenous magnetic surfaces with zero bounce-averaged radial drift, eliminating 1/nu ripple losses while remaining intrinsically disruption-free.</p>
                     </div>
                 </div>
             </div>
