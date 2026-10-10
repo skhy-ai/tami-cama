@@ -15,7 +15,7 @@ from typing import List, Optional, Dict, Any
 import h5py
 import numpy as np
 
-from fastapi import FastAPI, Query, HTTPException, Path
+from fastapi import FastAPI, Query, HTTPException, Path, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -280,6 +280,11 @@ def get_root_style():
     if os.path.exists(fpath):
         return FileResponse(fpath, media_type="text/css")
     raise HTTPException(status_code=404, detail="style.css not found")
+
+@app.get("/favicon.ico")
+@app.get("/tutorial/favicon.ico")
+def get_favicon():
+    return Response(status_code=204)
 
 @app.get("/app.js")
 def get_root_app():

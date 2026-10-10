@@ -1192,7 +1192,7 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
 }
 
 /* ========================================================================== */
-/* 5. Three.js WebGL 3D Multi-Reactor Studio & Visual FX Engine               */
+/* 5. Three.js WebGL 3D Multi-Reactor Studio & 2.5D Fallback Engine           */
 /* ========================================================================== */
 let scene3D, camera3D, renderer3D, controls3D;
 let stellaratorGroup, tokamakGroup, icfGroup;
@@ -1202,97 +1202,175 @@ let icfPulseTimer = 0;
 let quenchSparks = null;
 let disruptionFilaments = null;
 
+// 2.5D Canvas Compatibility Fallback State
+let isCanvas2DFallback = false;
+let fallbackCanvas = null;
+let fallbackCtx = null;
+let fallbackRotX = 0.35;
+let fallbackRotY = 0.45;
+let fallbackZoom = 1.0;
+let isDraggingFallback = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let fallbackAnimReq = null;
+let showLayerCoils = true;
+let showLayerPlasma = true;
+let showLayerDivertor = true;
+let showLayerHeat = true;
+let fallbackSparks = [];
+let fallbackYaw = 0;
+
 function init3DMultiReactorStudio() {
     const container = document.getElementById('threejs-container');
-    if (!container || !window.THREE) return;
+    if (!container) return;
 
-    // 1. Scene, Camera, Renderer
-    scene3D = new THREE.Scene();
-    scene3D.fog = new THREE.FogExp2(0x05070D, 0.003);
+    // Attach Camera & Layer HUD controls early so they function in both modes
+    attachStudioHUDListeners();
 
-    const width = container.clientWidth || 700;
-    const height = container.clientHeight || 480;
+    let webglUsable = false;
 
-    camera3D = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera3D.position.set(0, 18, 42);
+    // Attempt WebGL initialization if Three.js is loaded
+    if (window.THREE) {
+        try {
+            // Test WebGL capability on a transient canvas first
+            const testCanvas = document.createElement('canvas');
+            const gl = testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
+            if (!gl) {
+                throw new Error("WebGL context creation unavailable on current graphics driver");
+            }
 
-    renderer3D = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer3D.setSize(width, height);
-    renderer3D.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer3D.shadowMap.enabled = true;
-    container.appendChild(renderer3D.domElement);
+            // 1. Scene, Camera, Renderer
+            scene3D = new THREE.Scene();
+            scene3D.fog = new THREE.FogExp2(0x05070D, 0.003);
 
-    // 2. OrbitControls
-    if (THREE.OrbitControls) {
-        controls3D = new THREE.OrbitControls(camera3D, renderer3D.domElement);
-        controls3D.enableDamping = true;
-        controls3D.dampingFactor = 0.05;
-        controls3D.maxDistance = 120;
-        controls3D.minDistance = 8;
-        controls3D.target.set(0, 0, 0);
+            const width = container.clientWidth || 700;
+            const height = container.clientHeight || 480;
+
+            camera3D = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera3D.position.set(0, 18, 42);
+
+            renderer3D = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'default' });
+            renderer3D.setSize(width, height);
+            renderer3D.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer3D.shadowMap.enabled = true;
+            container.appendChild(renderer3D.domElement);
+
+            // 2. OrbitControls
+            if (THREE.OrbitControls) {
+                controls3D = new THREE.OrbitControls(camera3D, renderer3D.domElement);
+                controls3D.enableDamping = true;
+                controls3D.dampingFactor = 0.05;
+                controls3D.maxDistance = 120;
+                controls3D.minDistance = 8;
+                controls3D.target.set(0, 0, 0);
+            }
+
+            // 3. Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene3D.add(ambientLight);
+
+            const keyLight = new THREE.DirectionalLight(0x00F2FE, 1.8);
+            keyLight.position.set(30, 40, 30);
+            scene3D.add(keyLight);
+
+            const fillLight = new THREE.DirectionalLight(0x7B2CBF, 1.2);
+            fillLight.position.set(-30, -20, -30);
+            scene3D.add(fillLight);
+
+            const coreLight = new THREE.PointLight(0x00F2FE, 3.0, 50);
+            coreLight.position.set(0, 0, 0);
+            scene3D.add(coreLight);
+
+            // 4. Build 3D Models Procedurally
+            buildStellaratorModel();
+            buildTokamakModel();
+            buildIcfModel();
+
+            // Set initial active model
+            switch3DReactorModel(activeReactor);
+
+            window.addEventListener('resize', onWindowResize3D);
+
+            // Start WebGL render loop
+            animate3D();
+            webglUsable = true;
+        } catch (webglErr) {
+            console.warn("WebGL is unavailable in this environment, activating 2.5D Canvas Studio:", webglErr);
+            webglUsable = false;
+        }
     }
 
-    // 3. Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene3D.add(ambientLight);
+    if (!webglUsable) {
+        init2DFallbackStudio(container);
+    }
+}
 
-    const keyLight = new THREE.DirectionalLight(0x00F2FE, 1.8);
-    keyLight.position.set(30, 40, 30);
-    scene3D.add(keyLight);
-
-    const fillLight = new THREE.DirectionalLight(0x7B2CBF, 1.2);
-    fillLight.position.set(-30, -20, -30);
-    scene3D.add(fillLight);
-
-    const coreLight = new THREE.PointLight(0x00F2FE, 3.0, 50);
-    coreLight.position.set(0, 0, 0);
-    scene3D.add(coreLight);
-
-    // 4. Build 3D Models Procedurally
-    buildStellaratorModel();
-    buildTokamakModel();
-    buildIcfModel();
-
-    // Set initial active model
-    switch3DReactorModel(activeReactor);
-
-    // 5. Camera Toolbar Buttons
+function attachStudioHUDListeners() {
     const camBtns = {
-        'btn-cam-persp': () => setCameraPosition(0, 18, 42),
-        'btn-cam-top':   () => setCameraPosition(0, 48, 0.1),
-        'btn-cam-front': () => setCameraPosition(0, 0, 45),
-        'btn-cam-iso':   () => setCameraPosition(28, 28, 28),
-        'btn-cam-reset': () => { controls3D?.reset(); setCameraPosition(0, 18, 42); }
+        'btn-cam-persp': () => {
+            if (isCanvas2DFallback) {
+                fallbackRotX = 0.35; fallbackRotY = 0.45; fallbackZoom = 1.0;
+            } else {
+                setCameraPosition(0, 18, 42);
+            }
+        },
+        'btn-cam-top': () => {
+            if (isCanvas2DFallback) {
+                fallbackRotX = Math.PI / 2 - 0.05; fallbackRotY = 0; fallbackZoom = 1.0;
+            } else {
+                setCameraPosition(0, 48, 0.1);
+            }
+        },
+        'btn-cam-front': () => {
+            if (isCanvas2DFallback) {
+                fallbackRotX = 0; fallbackRotY = 0; fallbackZoom = 1.0;
+            } else {
+                setCameraPosition(0, 0, 45);
+            }
+        },
+        'btn-cam-iso': () => {
+            if (isCanvas2DFallback) {
+                fallbackRotX = 0.55; fallbackRotY = 0.75; fallbackZoom = 1.0;
+            } else {
+                setCameraPosition(28, 28, 28);
+            }
+        },
+        'btn-cam-reset': () => {
+            if (isCanvas2DFallback) {
+                fallbackRotX = 0.35; fallbackRotY = 0.45; fallbackZoom = 1.0;
+            } else {
+                controls3D?.reset(); setCameraPosition(0, 18, 42);
+            }
+        }
     };
+
     Object.keys(camBtns).forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.hud-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.threejs-camera-hud .hud-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 camBtns[id]();
             });
         }
     });
 
-    // 6. Layer Toggles
     document.getElementById('layer-coils')?.addEventListener('change', e => {
+        showLayerCoils = e.target.checked;
         toggleLayer('coils', e.target.checked);
     });
     document.getElementById('layer-plasma')?.addEventListener('change', e => {
+        showLayerPlasma = e.target.checked;
         toggleLayer('plasma', e.target.checked);
     });
     document.getElementById('layer-divertor')?.addEventListener('change', e => {
+        showLayerDivertor = e.target.checked;
         toggleLayer('divertor', e.target.checked);
     });
     document.getElementById('layer-heat')?.addEventListener('change', e => {
+        showLayerHeat = e.target.checked;
         toggleLayer('heat', e.target.checked);
     });
-
-    window.addEventListener('resize', onWindowResize3D);
-
-    // 7. Render Loop
-    animate3D();
 }
 
 function setCameraPosition(x, y, z) {
@@ -1319,6 +1397,506 @@ function onWindowResize3D() {
     camera3D.aspect = w / h;
     camera3D.updateProjectionMatrix();
     renderer3D.setSize(w, h);
+}
+
+/* ========================================================================== */
+/* 5b. 2.5D Canvas Studio Compatibility Engine (No WebGL Dependencies)        */
+/* ========================================================================== */
+function init2DFallbackStudio(container) {
+    isCanvas2DFallback = true;
+
+    // Update status indicators on HUD
+    const fpsTag = document.getElementById('webgl-fps-tag');
+    if (fpsTag) {
+        fpsTag.textContent = '60 FPS 2.5D CANVAS';
+        fpsTag.className = 'live-tag highlight-gold';
+    }
+
+    const orbitTag = container.parentElement?.querySelector('.highlight-cyan');
+    if (orbitTag) {
+        orbitTag.textContent = '2.5D INTERACTIVE ENGINE';
+    }
+
+    // Clean container of any stale elements
+    const oldCanvas = container.querySelector('canvas');
+    if (oldCanvas) oldCanvas.remove();
+
+    fallbackCanvas = document.createElement('canvas');
+    fallbackCanvas.id = 'canvas-2d-fallback';
+    fallbackCanvas.style.width = '100%';
+    fallbackCanvas.style.height = '100%';
+    fallbackCanvas.style.display = 'block';
+    fallbackCanvas.style.cursor = 'grab';
+    container.appendChild(fallbackCanvas);
+
+    fallbackCtx = fallbackCanvas.getContext('2d');
+
+    function resizeFallback() {
+        if (!container || !fallbackCanvas || !fallbackCtx) return;
+        const rect = container.getBoundingClientRect();
+        const w = rect.width || 700;
+        const h = rect.height || 480;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        fallbackCanvas.width = w * dpr;
+        fallbackCanvas.height = h * dpr;
+        fallbackCtx.setTransform(1, 0, 0, 1, 0, 0);
+        fallbackCtx.scale(dpr, dpr);
+    }
+
+    resizeFallback();
+    window.addEventListener('resize', resizeFallback);
+
+    // Mouse interactive drag rotation
+    fallbackCanvas.addEventListener('mousedown', (e) => {
+        isDraggingFallback = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        fallbackCanvas.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDraggingFallback) return;
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+
+        fallbackRotY += dx * 0.008;
+        fallbackRotX = Math.max(-1.42, Math.min(1.42, fallbackRotX + dy * 0.008));
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isDraggingFallback) {
+            isDraggingFallback = false;
+            if (fallbackCanvas) fallbackCanvas.style.cursor = 'grab';
+        }
+    });
+
+    // Mouse wheel zoom
+    fallbackCanvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        fallbackZoom = Math.max(0.4, Math.min(2.6, fallbackZoom + delta));
+    }, { passive: false });
+
+    // Touch events for mobile/trackpads
+    let touchStartX = 0, touchStartY = 0;
+    fallbackCanvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+    });
+    fallbackCanvas.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1) {
+            const dx = e.touches[0].clientX - touchStartX;
+            const dy = e.touches[0].clientY - touchStartY;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            fallbackRotY += dx * 0.01;
+            fallbackRotX = Math.max(-1.42, Math.min(1.42, fallbackRotX + dy * 0.01));
+        }
+    });
+
+    // Start 2.5D animation render loop
+    animate2DFallback();
+}
+
+function projectPoint(x, y, z, cx, cy, rotX, rotY, zoom) {
+    // 1. Rotate around Y axis
+    const cosY = Math.cos(rotY);
+    const sinY = Math.sin(rotY);
+    const x1 = x * cosY + z * sinY;
+    const z1 = -x * sinY + z * cosY;
+
+    // 2. Rotate around X axis
+    const cosX = Math.cos(rotX);
+    const sinX = Math.sin(rotX);
+    const y2 = y * cosX - z1 * sinX;
+    const z2 = y * sinX + z1 * cosX;
+
+    // 3. Perspective projection
+    const cameraDist = 44;
+    const pz = z2 + cameraDist;
+    const fov = 440 * zoom;
+    const depthScale = fov / (pz > 4 ? pz : 4);
+
+    return {
+        x: cx + x1 * depthScale,
+        y: cy - y2 * depthScale,
+        z: z2,
+        scale: depthScale
+    };
+}
+
+function animate2DFallback() {
+    fallbackAnimReq = requestAnimationFrame(animate2DFallback);
+
+    if (!fallbackCanvas || !fallbackCtx) return;
+    const rect = fallbackCanvas.getBoundingClientRect();
+    const w = rect.width || 700;
+    const h = rect.height || 480;
+    const cx = w / 2;
+    const cy = h / 2;
+    const time = Date.now() * 0.001;
+
+    // Smooth subtle continuous orbit if user is not dragging
+    if (!isDraggingFallback) {
+        fallbackYaw += 0.003;
+    }
+    const currentRotY = fallbackRotY + fallbackYaw;
+    const currentRotX = fallbackRotX;
+
+    // Clear Canvas with sleek dark radial gradient
+    fallbackCtx.clearRect(0, 0, w, h);
+    const bgGrad = fallbackCtx.createRadialGradient(cx, cy, 20, cx, cy, Math.max(w, h));
+    bgGrad.addColorStop(0, '#0D1424');
+    bgGrad.addColorStop(1, '#05070D');
+    fallbackCtx.fillStyle = bgGrad;
+    fallbackCtx.fillRect(0, 0, w, h);
+
+    // Subtle Perspective Floor Grid for 3D depth perception
+    fallbackCtx.strokeStyle = 'rgba(0, 242, 254, 0.08)';
+    fallbackCtx.lineWidth = 1;
+    for (let gx = -24; gx <= 24; gx += 8) {
+        const p1 = projectPoint(gx, -14, -24, cx, cy, currentRotX, currentRotY, fallbackZoom);
+        const p2 = projectPoint(gx, -14, 24, cx, cy, currentRotX, currentRotY, fallbackZoom);
+        fallbackCtx.beginPath();
+        fallbackCtx.moveTo(p1.x, p1.y);
+        fallbackCtx.lineTo(p2.x, p2.y);
+        fallbackCtx.stroke();
+    }
+    for (let gz = -24; gz <= 24; gz += 8) {
+        const p1 = projectPoint(-24, -14, gz, cx, cy, currentRotX, currentRotY, fallbackZoom);
+        const p2 = projectPoint(24, -14, gz, cx, cy, currentRotX, currentRotY, fallbackZoom);
+        fallbackCtx.beginPath();
+        fallbackCtx.moveTo(p1.x, p1.y);
+        fallbackCtx.lineTo(p2.x, p2.y);
+        fallbackCtx.stroke();
+    }
+
+    // Render Active Fusion Topology
+    if (activeReactor === 'REACTOR_TOKAMAK') {
+        render2DTokamak(cx, cy, currentRotX, currentRotY, time);
+    } else if (activeReactor === 'REACTOR_ICF') {
+        render2DIcf(cx, cy, currentRotX, currentRotY, time);
+    } else {
+        render2DStellarator(cx, cy, currentRotX, currentRotY, time);
+    }
+}
+
+/* --- 2.5D Renderer: QI Modular Stellarator --- */
+function render2DStellarator(cx, cy, rotX, rotY, time) {
+    const numCoils = 20;
+    const majorR = 14.0;
+    const minorR = 4.8;
+    const isQuench = activeMode === 'MODE_HTS_COIL_HOTSPOT_QUENCH';
+    const isDetachment = activeMode === 'MODE_DIVERTOR_DETACHMENT_FAULT';
+
+    // 1. Draw 20 Modular Non-Planar HTS Coils
+    if (showLayerCoils) {
+        for (let i = 0; i < numCoils; i++) {
+            const phi = (i / numCoils) * Math.PI * 2;
+            const isQuenchCoil = (i === 0 && isQuench);
+
+            fallbackCtx.beginPath();
+            const segments = 32;
+            for (let j = 0; j <= segments; j++) {
+                const theta = (j / segments) * Math.PI * 2;
+                const r = majorR + minorR * Math.cos(theta);
+                const zTwist = Math.sin(theta * 2 + phi * 5) * 1.6;
+                const x = r * Math.cos(phi) - Math.sin(phi) * 1.2 * Math.sin(theta * 2);
+                const y = minorR * Math.sin(theta) + zTwist;
+                const z = r * Math.sin(phi) + Math.cos(phi) * 1.2 * Math.sin(theta * 2);
+
+                const proj = projectPoint(x, y, z, cx, cy, rotX, rotY, fallbackZoom);
+                if (j === 0) fallbackCtx.moveTo(proj.x, proj.y);
+                else fallbackCtx.lineTo(proj.x, proj.y);
+            }
+
+            if (isQuenchCoil) {
+                const pulse = 0.5 + 0.5 * Math.sin(time * 16.0);
+                fallbackCtx.strokeStyle = `rgba(255, 51, 102, ${0.8 + pulse * 0.2})`;
+                fallbackCtx.lineWidth = 3.5;
+                fallbackCtx.shadowBlur = 18;
+                fallbackCtx.shadowColor = '#FF3366';
+            } else {
+                fallbackCtx.strokeStyle = 'rgba(0, 242, 254, 0.55)';
+                fallbackCtx.lineWidth = 1.8;
+                fallbackCtx.shadowBlur = 6;
+                fallbackCtx.shadowColor = '#00F2FE';
+            }
+            fallbackCtx.stroke();
+            fallbackCtx.shadowBlur = 0;
+        }
+
+        // Quench Spark Particles
+        if (isQuench) {
+            const hotspot = projectPoint(majorR + minorR, 0, 0, cx, cy, rotX, rotY, fallbackZoom);
+            for (let s = 0; s < 12; s++) {
+                const angle = time * 8.0 + s * (Math.PI / 6);
+                const dist = 14 + 10 * Math.sin(time * 12.0 + s);
+                fallbackCtx.fillStyle = '#FFE600';
+                fallbackCtx.beginPath();
+                fallbackCtx.arc(hotspot.x + Math.cos(angle) * dist, hotspot.y + Math.sin(angle) * dist, 2.5, 0, Math.PI * 2);
+                fallbackCtx.fill();
+            }
+        }
+    }
+
+    // 2. Draw Helical Plasma Core Column
+    if (showLayerPlasma) {
+        fallbackCtx.beginPath();
+        const plasmaSegs = 72;
+        for (let p = 0; p <= plasmaSegs; p++) {
+            const u = (p / plasmaSegs) * Math.PI * 2;
+            const r = majorR;
+            const y = 1.2 * Math.sin(u * 5);
+            const x = r * Math.cos(u);
+            const z = r * Math.sin(u);
+
+            const proj = projectPoint(x, y, z, cx, cy, rotX, rotY, fallbackZoom);
+            if (p === 0) fallbackCtx.moveTo(proj.x, proj.y);
+            else fallbackCtx.lineTo(proj.x, proj.y);
+        }
+        fallbackCtx.strokeStyle = 'rgba(0, 242, 254, 0.85)';
+        fallbackCtx.lineWidth = 6.0;
+        fallbackCtx.shadowBlur = 22;
+        fallbackCtx.shadowColor = '#00F2FE';
+        fallbackCtx.stroke();
+        fallbackCtx.shadowBlur = 0;
+    }
+
+    // 3. Draw Divertor Plates
+    if (showLayerDivertor) {
+        for (let d = 0; d < 5; d++) {
+            const phi = (d / 5) * Math.PI * 2;
+            const p1 = projectPoint(majorR * Math.cos(phi), -minorR * 1.1, majorR * Math.sin(phi), cx, cy, rotX, rotY, fallbackZoom);
+            const p2 = projectPoint((majorR + 2.5) * Math.cos(phi), -minorR * 1.1, (majorR + 2.5) * Math.sin(phi), cx, cy, rotX, rotY, fallbackZoom);
+
+            fallbackCtx.beginPath();
+            fallbackCtx.moveTo(p1.x, p1.y);
+            fallbackCtx.lineTo(p2.x, p2.y);
+            fallbackCtx.strokeStyle = isDetachment ? '#FF9900' : '#4ADE80';
+            fallbackCtx.lineWidth = 3.5;
+            fallbackCtx.stroke();
+        }
+    }
+}
+
+/* --- 2.5D Renderer: Advanced Axisymmetric Tokamak --- */
+function render2DTokamak(cx, cy, rotX, rotY, time) {
+    const isDisruption = activeMode === 'MODE_TOKAMAK_MAJOR_DISRUPTION';
+    const isVde = activeMode === 'MODE_TOKAMAK_VERTICAL_DISPLACEMENT_EVENT';
+
+    // 1. Central Solenoid (Stacked Cylinder Rings)
+    if (showLayerCoils) {
+        fallbackCtx.strokeStyle = '#F59E0B';
+        fallbackCtx.lineWidth = 2.0;
+        for (let ringY = -10; ringY <= 10; ringY += 2.5) {
+            fallbackCtx.beginPath();
+            for (let a = 0; a <= 20; a++) {
+                const ang = (a / 20) * Math.PI * 2;
+                const p = projectPoint(2.8 * Math.cos(ang), ringY, 2.8 * Math.sin(ang), cx, cy, rotX, rotY, fallbackZoom);
+                if (a === 0) fallbackCtx.moveTo(p.x, p.y);
+                else fallbackCtx.lineTo(p.x, p.y);
+            }
+            fallbackCtx.stroke();
+        }
+
+        // 2. 16 D-Shaped Toroidal Field (TF) Coils
+        const numTf = 16;
+        for (let t = 0; t < numTf; t++) {
+            const phi = (t / numTf) * Math.PI * 2;
+            fallbackCtx.beginPath();
+
+            // Inner vertical leg
+            const pBot = projectPoint(4.0 * Math.cos(phi), -10, 4.0 * Math.sin(phi), cx, cy, rotX, rotY, fallbackZoom);
+            const pTop = projectPoint(4.0 * Math.cos(phi), 10, 4.0 * Math.sin(phi), cx, cy, rotX, rotY, fallbackZoom);
+            fallbackCtx.moveTo(pBot.x, pBot.y);
+            fallbackCtx.lineTo(pTop.x, pTop.y);
+
+            // Outer curved D arc
+            for (let arc = 0; arc <= 16; arc++) {
+                const th = -Math.PI / 2 + (arc / 16) * Math.PI;
+                const rArc = 4.0 + 14.5 * Math.cos(th);
+                const yArc = 10.0 * Math.sin(th);
+                const pArc = projectPoint(rArc * Math.cos(phi), yArc, rArc * Math.sin(phi), cx, cy, rotX, rotY, fallbackZoom);
+                fallbackCtx.lineTo(pArc.x, pArc.y);
+            }
+            fallbackCtx.lineTo(pBot.x, pBot.y);
+
+            fallbackCtx.strokeStyle = 'rgba(0, 242, 254, 0.45)';
+            fallbackCtx.lineWidth = 1.6;
+            fallbackCtx.stroke();
+        }
+
+        // 3. Poloidal Field (PF) Ring Coils
+        const pfConfigs = [{ r: 18, y: 11 }, { r: 18, y: -11 }, { r: 21, y: 3 }, { r: 21, y: -3 }];
+        fallbackCtx.strokeStyle = '#38BDF8';
+        fallbackCtx.lineWidth = 2.2;
+        pfConfigs.forEach(pf => {
+            fallbackCtx.beginPath();
+            for (let a = 0; a <= 24; a++) {
+                const ang = (a / 24) * Math.PI * 2;
+                const p = projectPoint(pf.r * Math.cos(ang), pf.y, pf.r * Math.sin(ang), cx, cy, rotX, rotY, fallbackZoom);
+                if (a === 0) fallbackCtx.moveTo(p.x, p.y);
+                else fallbackCtx.lineTo(p.x, p.y);
+            }
+            fallbackCtx.stroke();
+        });
+    }
+
+    // 4. Glowing Plasma Torus
+    if (showLayerPlasma) {
+        const vdeOffset = isVde ? 3.5 * Math.sin(time * 5.0) : 0;
+        const majorR = 11.5;
+
+        fallbackCtx.beginPath();
+        for (let a = 0; a <= 48; a++) {
+            const ang = (a / 48) * Math.PI * 2;
+            const p = projectPoint(majorR * Math.cos(ang), vdeOffset, majorR * Math.sin(ang), cx, cy, rotX, rotY, fallbackZoom);
+            if (a === 0) fallbackCtx.moveTo(p.x, p.y);
+            else fallbackCtx.lineTo(p.x, p.y);
+        }
+
+        if (isDisruption) {
+            const flash = Math.abs(Math.sin(time * 18.0));
+            fallbackCtx.strokeStyle = `rgba(255, ${Math.floor(100 * flash)}, 50, 0.95)`;
+            fallbackCtx.lineWidth = 4.0 + flash * 4.0;
+            fallbackCtx.shadowBlur = 30;
+            fallbackCtx.shadowColor = '#FF3366';
+        } else {
+            fallbackCtx.strokeStyle = 'rgba(0, 242, 254, 0.85)';
+            fallbackCtx.lineWidth = 7.0;
+            fallbackCtx.shadowBlur = 24;
+            fallbackCtx.shadowColor = '#00F2FE';
+        }
+        fallbackCtx.stroke();
+        fallbackCtx.shadowBlur = 0;
+
+        // Disruption Electrical Filament Arcs
+        if (isDisruption) {
+            fallbackCtx.strokeStyle = '#FFFFFF';
+            fallbackCtx.lineWidth = 2.0;
+            for (let arc = 0; arc < 6; arc++) {
+                const ang = arc * (Math.PI / 3) + time * 12.0;
+                const p1 = projectPoint(majorR * Math.cos(ang), vdeOffset, majorR * Math.sin(ang), cx, cy, rotX, rotY, fallbackZoom);
+                const p2 = projectPoint(17.5 * Math.cos(ang + 0.3), vdeOffset + 4 * Math.sin(time * 10), 17.5 * Math.sin(ang + 0.3), cx, cy, rotX, rotY, fallbackZoom);
+                fallbackCtx.beginPath();
+                fallbackCtx.moveTo(p1.x, p1.y);
+                fallbackCtx.lineTo(p2.x, p2.y);
+                fallbackCtx.stroke();
+            }
+        }
+    }
+}
+
+/* --- 2.5D Renderer: Inertial Confinement Fusion (ICF) --- */
+function render2DIcf(cx, cy, rotX, rotY, time) {
+    const isRt = activeMode === 'MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY';
+    const isMiss = activeMode === 'MODE_ICF_TARGET_TRACKING_INJECTION_MISS';
+
+    // 1. Spherical Target Chamber Geodesic Rings
+    if (showLayerDivertor) {
+        fallbackCtx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+        fallbackCtx.lineWidth = 1.2;
+        const sphereR = 19;
+
+        // Equator ring
+        fallbackCtx.beginPath();
+        for (let a = 0; a <= 32; a++) {
+            const ang = (a / 32) * Math.PI * 2;
+            const p = projectPoint(sphereR * Math.cos(ang), 0, sphereR * Math.sin(ang), cx, cy, rotX, rotY, fallbackZoom);
+            if (a === 0) fallbackCtx.moveTo(p.x, p.y);
+            else fallbackCtx.lineTo(p.x, p.y);
+        }
+        fallbackCtx.stroke();
+
+        // Meridian rings
+        [0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4].forEach(phi => {
+            fallbackCtx.beginPath();
+            for (let a = 0; a <= 32; a++) {
+                const th = (a / 32) * Math.PI * 2;
+                const p = projectPoint(sphereR * Math.sin(th) * Math.cos(phi), sphereR * Math.cos(th), sphereR * Math.sin(th) * Math.sin(phi), cx, cy, rotX, rotY, fallbackZoom);
+                if (a === 0) fallbackCtx.moveTo(p.x, p.y);
+                else fallbackCtx.lineTo(p.x, p.y);
+            }
+            fallbackCtx.stroke();
+        });
+    }
+
+    // 2. 16 UV Laser Beams & 5 Hz Pulsed Microimplosions
+    const pulseCycle = (time * 1.5) % 1.5; // 5 Hz pulse frequency cycle
+    const isFiring = (pulseCycle < 0.22);
+    const laserIntensity = isFiring ? (1.0 - pulseCycle / 0.22) : 0.25;
+
+    // Target coordinate (off-center if miss)
+    const targetX = isMiss ? 3.8 : 0;
+    const targetY = isMiss ? 2.5 : 0;
+    const targetZ = 0;
+    const targetP = projectPoint(targetX, targetY, targetZ, cx, cy, rotX, rotY, fallbackZoom);
+
+    if (showLayerCoils) {
+        const numBeams = 16;
+        for (let b = 0; b < numBeams; b++) {
+            const phi = (b / numBeams) * Math.PI * 2;
+            const theta = (b % 2 === 0) ? 0.8 : -0.8;
+            const bx = 19 * Math.cos(theta) * Math.cos(phi);
+            const by = 19 * Math.sin(theta);
+            const bz = 19 * Math.cos(theta) * Math.sin(phi);
+
+            const launchP = projectPoint(bx, by, bz, cx, cy, rotX, rotY, fallbackZoom);
+
+            fallbackCtx.beginPath();
+            fallbackCtx.moveTo(launchP.x, launchP.y);
+            fallbackCtx.lineTo(targetP.x, targetP.y);
+
+            if (isFiring) {
+                fallbackCtx.strokeStyle = `rgba(0, 242, 254, ${0.4 + laserIntensity * 0.6})`;
+                fallbackCtx.lineWidth = 1.5 + laserIntensity * 2.5;
+                fallbackCtx.shadowBlur = 18;
+                fallbackCtx.shadowColor = '#00F2FE';
+            } else {
+                fallbackCtx.strokeStyle = 'rgba(0, 242, 254, 0.2)';
+                fallbackCtx.lineWidth = 1.0;
+                fallbackCtx.shadowBlur = 0;
+            }
+            fallbackCtx.stroke();
+            fallbackCtx.shadowBlur = 0;
+        }
+    }
+
+    // 3. Cryogenic DT Fuel Pellet & Microimplosion Flash
+    if (showLayerPlasma) {
+        if (isFiring) {
+            // High-energy blast flash
+            const blastR = pulseCycle * 65.0 * (isRt ? 0.4 : 1.0);
+            fallbackCtx.fillStyle = isRt ? 'rgba(255, 150, 50, 0.7)' : 'rgba(255, 255, 255, 0.9)';
+            fallbackCtx.beginPath();
+            fallbackCtx.arc(targetP.x, targetP.y, Math.max(3, blastR), 0, Math.PI * 2);
+            fallbackCtx.fill();
+        } else {
+            // Quiescent cryogenic pellet
+            fallbackCtx.fillStyle = isMiss ? '#FF3366' : '#E0F2FE';
+            fallbackCtx.beginPath();
+            fallbackCtx.arc(targetP.x, targetP.y, 4.5, 0, Math.PI * 2);
+            fallbackCtx.fill();
+
+            // Rayleigh-Taylor Asymmetric perturbation spikes
+            if (isRt) {
+                fallbackCtx.strokeStyle = '#FF3366';
+                fallbackCtx.lineWidth = 2.0;
+                for (let sp = 0; sp < 8; sp++) {
+                    const ang = sp * (Math.PI / 4) + time * 3.0;
+                    fallbackCtx.beginPath();
+                    fallbackCtx.moveTo(targetP.x, targetP.y);
+                    fallbackCtx.lineTo(targetP.x + Math.cos(ang) * 12, targetP.y + Math.sin(ang) * 12);
+                    fallbackCtx.stroke();
+                }
+            }
+        }
+    }
 }
 
 /* --- Build QI Stellarator Procedural Model --- */
