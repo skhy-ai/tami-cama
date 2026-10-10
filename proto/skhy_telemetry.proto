@@ -31,13 +31,36 @@ enum PayloadType {
   PAYLOAD_SUBSYSTEM_REPORT = 4;
 }
 
+enum ReactorType {
+  REACTOR_QI_STELLARATOR = 0;
+  REACTOR_TOKAMAK = 1;
+  REACTOR_ICF = 2;
+}
+
 enum OperationalMode {
+  // Common / Stellarator Operational & Failure Modes
   MODE_STEADY_STATE_NOMINAL = 0;
   MODE_DIVERTOR_DETACHMENT_FAULT = 1;
   MODE_HTS_COIL_HOTSPOT_QUENCH = 2;
   MODE_PELLET_REFUELING_BURST = 3;
   MODE_IMPURITY_ACCUMULATION = 4;
   MODE_STARTUP_RAMP = 5;
+
+  // Tokamak Distinct Operational & Failure Modes
+  MODE_TOKAMAK_NOMINAL_BURNTIME = 10;
+  MODE_TOKAMAK_MAJOR_DISRUPTION = 11;
+  MODE_TOKAMAK_VERTICAL_DISPLACEMENT_EVENT = 12;
+  MODE_TOKAMAK_UNMITIGATED_ELM_BURST = 13;
+  MODE_TOKAMAK_RUNAWAY_ELECTRON_AVALANCHE = 14;
+  MODE_TOKAMAK_NEOCLASSICAL_TEARING_MODE = 15;
+
+  // ICF Distinct Operational & Failure Modes
+  MODE_ICF_NOMINAL_REPETITION_PULSE = 20;
+  MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY = 21;
+  MODE_ICF_LASER_POWER_IMBALANCE_JITTER = 22;
+  MODE_ICF_FINAL_OPTICS_DEBRIS_DAMAGE = 23;
+  MODE_ICF_TARGET_TRACKING_INJECTION_MISS = 24;
+  MODE_ICF_CHAMBER_CLEARING_PRESSURE_CHOKE = 25;
 }
 
 enum QuenchSeverity {
@@ -168,14 +191,63 @@ message BlanketTelemetry {
   double coolant_flow_rate_kg_s = 6;           // Blanket mass flow rate
 }
 
-// Multi-Subsystem Composite Telemetry Report
+// Subsystem: Tokamak Core Physics & Electromagnetics
+message TokamakCoreTelemetry {
+  double plasma_current_ma = 1;                // Plasma current I_p in MA (e.g., 15.0 MA)
+  double central_solenoid_current_ka = 2;      // Central solenoid current (kA)
+  double safety_factor_q95 = 3;                // Edge safety factor q_95 (must be > 2.5)
+  double loop_voltage_v = 4;                   // Inductive loop voltage (V)
+  double poloidal_divertor_heat_flux_mw_m2 = 5;// Divertor strike point heat flux (MW/m^2)
+  double vertical_displacement_z_mm = 6;       // Vertical position deviation Delta Z (mm)
+  double elm_frequency_hz = 7;                 // Edge-Localized Mode frequency (Hz)
+  bool disruption_warning = 8;                 // Neural network / physics disruption alarm
+  double runaway_electron_current_ma = 9;      // Relativistic runaway electron current (MA)
+  double internal_inductance_li = 10;          // Plasma internal inductance l_i
+  double greenwald_density_fraction = 11;      // n_e / n_Greenwald (must be < 1.0)
+}
+
+// Subsystem: Inertial Confinement Fusion (ICF) Driver & Target Chamber
+message IcfCoreTelemetry {
+  double driver_laser_energy_mj = 1;           // Laser/driver energy per shot (MJ, e.g. 2.15 MJ)
+  double repetition_rate_hz = 2;               // Shot repetition rate (Hz, e.g. 5.0 Hz)
+  double target_gain_g = 3;                    // Target pellet gain G = E_fusion / E_driver
+  double implosion_symmetry_rms_pct = 4;       // Implosion asymmetry RMS deviation % (< 1.0%)
+  double capsule_ablation_pressure_mbar = 5;   // Peak ablation drive pressure (Mbar, ~100-300 Mbar)
+  double beam_timing_jitter_ps = 6;            // Laser beam sync timing jitter (ps, limit < 15 ps)
+  double final_optics_transmission_pct = 7;    // Debris shield optical transmission % (healthy > 95%)
+  double target_tracking_error_um = 8;         // Injection pellet tracking error in micrometers (< 20 um)
+  double target_chamber_pressure_pa = 9;       // Post-shot background chamber pressure (Pa)
+  uint64 total_shots_fired = 10;               // Accumulated target shots count
+  bool rayleigh_taylor_instability_alert = 11;// Hydrodynamic RT instability spike
+}
+
+// Subsystem: QI Stellarator Core Wrapper
+message StellaratorCoreTelemetry {
+  CoilCryoTelemetry coil_cryo = 1;
+  PlasmaCoreTelemetry plasma_core = 2;
+  DivertorTelemetry divertor = 3;
+}
+
+// Multi-Subsystem Composite Telemetry Report with Polymorphic Core
 message SubsystemTelemetryReport {
   Envelope envelope = 1;
-  OperationalMode active_mode = 2;             // Current operational / failure mode
-  string mode_description = 3;                 // Human-readable mode description
-  CoilCryoTelemetry coil_cryo = 4;
-  PlasmaCoreTelemetry plasma_core = 5;
-  DivertorTelemetry divertor = 6;
-  BlanketTelemetry blanket = 7;
-  DigitalTwinState power_balance = 8;
+  ReactorType reactor_type = 2;                // Active fusion reactor concept
+  OperationalMode active_mode = 3;             // Current operational / failure mode
+  string mode_description = 4;                 // Human-readable mode description
+
+  // Universal Balance of Plant & Tritium Fuel Modules
+  BlanketTelemetry blanket = 5;
+  DigitalTwinState power_balance = 6;
+
+  // Polymorphic Core Architecture
+  oneof reactor_core {
+    StellaratorCoreTelemetry stellarator_core = 7;
+    TokamakCoreTelemetry tokamak_core = 8;
+    IcfCoreTelemetry icf_core = 9;
+  }
+
+  // Backward compatibility fields for legacy listeners
+  CoilCryoTelemetry coil_cryo = 10;
+  PlasmaCoreTelemetry plasma_core = 11;
+  DivertorTelemetry divertor = 12;
 }

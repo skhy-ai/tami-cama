@@ -26,10 +26,11 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, ROOT_DIR)
 
 from python_common.skhy_telemetry_pb2 import (
-    PurdueLevel, PayloadType, OperationalMode,
+    PurdueLevel, PayloadType, OperationalMode, ReactorType,
     Envelope, DigitalTwinState, QuenchDiagnostic,
     CoilCryoTelemetry, PlasmaCoreTelemetry, DivertorTelemetry,
-    BlanketTelemetry, SubsystemTelemetryReport
+    BlanketTelemetry, SubsystemTelemetryReport,
+    TokamakCoreTelemetry, IcfCoreTelemetry, StellaratorCoreTelemetry
 )
 
 class StellaratorPINN(nn.Module):
@@ -289,31 +290,187 @@ class BreedingBlanketDigitalTwin:
         )
 
 # ============================================================================
-# Main Master Multi-Subsystem Digital Twin Engine
+# Tokamak & ICF Core Physics Subsystem Digital Twins
+# ============================================================================
+
+class TokamakCoreDigitalTwin:
+    """Subsystem: Tokamak Core Physics, Central Solenoid, Divertor & Disruption Predictor"""
+    def __init__(self):
+        self.plasma_current_ma = 15.0
+        self.cs_current_ka = 42.0
+        self.safety_factor_q95 = 3.25
+        self.loop_voltage_v = 0.12
+        self.divertor_flux_mw_m2 = 6.5
+        self.vertical_disp_mm = 0.0
+        self.elm_freq_hz = 12.0
+        self.disruption_warning = False
+        self.runaway_current_ma = 0.0
+        self.internal_inductance = 0.85
+        self.greenwald_fraction = 0.72
+
+    def update(self, mode: OperationalMode, time_elapsed: float = 0.0) -> TokamakCoreTelemetry:
+        if mode == OperationalMode.MODE_TOKAMAK_MAJOR_DISRUPTION:
+            # Thermal quench -> Current quench runaway
+            decay = min(1.0, time_elapsed / 2.5)
+            self.plasma_current_ma = max(0.1, 15.0 * (1.0 - decay))
+            self.loop_voltage_v = 150.0 * np.exp(-time_elapsed) + float(np.random.normal(0, 5.0))
+            self.safety_factor_q95 = max(1.1, 3.25 - 2.1 * decay)
+            self.divertor_flux_mw_m2 = min(35.0, 6.5 + 28.5 * np.exp(-((time_elapsed - 0.5)**2) / 0.2))
+            self.disruption_warning = True
+            self.runaway_current_ma = min(4.2, 3.5 * decay)
+            self.internal_inductance = 1.65
+        elif mode == OperationalMode.MODE_TOKAMAK_VERTICAL_DISPLACEMENT_EVENT:
+            drift = min(1.0, time_elapsed / 3.0)
+            self.vertical_disp_mm = 120.0 * drift + float(np.random.normal(0, 3.0))
+            self.divertor_flux_mw_m2 = 6.5 + 18.0 * drift
+            self.disruption_warning = self.vertical_disp_mm > 50.0
+            self.safety_factor_q95 = max(1.8, 3.25 - 1.2 * drift)
+        elif mode == OperationalMode.MODE_TOKAMAK_UNMITIGATED_ELM_BURST:
+            self.elm_freq_hz = 45.0 + float(np.random.normal(0, 3.0))
+            self.divertor_flux_mw_m2 = 24.5 + 6.0 * np.sin(time_elapsed * 25.0)
+            self.disruption_warning = False
+        elif mode == OperationalMode.MODE_TOKAMAK_RUNAWAY_ELECTRON_AVALANCHE:
+            self.runaway_current_ma = 3.8 + float(np.random.normal(0, 0.1))
+            self.loop_voltage_v = 45.0 + float(np.random.normal(0, 2.0))
+            self.disruption_warning = True
+        elif mode == OperationalMode.MODE_TOKAMAK_NEOCLASSICAL_TEARING_MODE:
+            self.safety_factor_q95 = 2.15 + float(np.random.normal(0, 0.05))
+            self.internal_inductance = 1.15
+            self.disruption_warning = False
+            self.divertor_flux_mw_m2 = 5.2
+        else: # MODE_TOKAMAK_NOMINAL_BURNTIME or default
+            self.plasma_current_ma = 15.0 + float(np.random.normal(0, 0.05))
+            self.cs_current_ka = 42.0 - 0.2 * time_elapsed
+            self.safety_factor_q95 = 3.25 + float(np.random.normal(0, 0.02))
+            self.loop_voltage_v = 0.12 + float(np.random.normal(0, 0.01))
+            self.divertor_flux_mw_m2 = 6.5 + float(np.random.normal(0, 0.2))
+            self.vertical_disp_mm = float(np.random.normal(0, 1.2))
+            self.elm_freq_hz = 12.0 + float(np.random.normal(0, 0.5))
+            self.disruption_warning = False
+            self.runaway_current_ma = 0.0
+            self.internal_inductance = 0.85
+            self.greenwald_fraction = 0.72
+
+        return TokamakCoreTelemetry(
+            plasma_current_ma=self.plasma_current_ma,
+            central_solenoid_current_ka=self.cs_current_ka,
+            safety_factor_q95=self.safety_factor_q95,
+            loop_voltage_v=self.loop_voltage_v,
+            poloidal_divertor_heat_flux_mw_m2=self.divertor_flux_mw_m2,
+            vertical_displacement_z_mm=self.vertical_disp_mm,
+            elm_frequency_hz=self.elm_freq_hz,
+            disruption_warning=self.disruption_warning,
+            runaway_electron_current_ma=self.runaway_current_ma,
+            internal_inductance_li=self.internal_inductance,
+            greenwald_density_fraction=self.greenwald_fraction
+        )
+
+class IcfCoreDigitalTwin:
+    """Subsystem: Inertial Confinement Fusion (ICF) Driver, Beam Balance & Target Chamber"""
+    def __init__(self):
+        self.laser_energy_mj = 2.15
+        self.repetition_rate_hz = 5.0
+        self.target_gain_g = 85.0
+        self.implosion_symmetry_rms = 0.45
+        self.ablation_pressure_mbar = 180.0
+        self.timing_jitter_ps = 4.2
+        self.optics_trans_pct = 98.5
+        self.tracking_error_um = 8.5
+        self.chamber_pressure_pa = 0.05
+        self.shots_count = 12500
+        self.rt_instability_alert = False
+
+    def update(self, mode: OperationalMode, time_elapsed: float = 0.0) -> IcfCoreTelemetry:
+        self.shots_count += int(self.repetition_rate_hz * 0.5)
+
+        if mode == OperationalMode.MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY:
+            self.implosion_symmetry_rms = 2.85 + float(np.random.normal(0, 0.15))
+            self.target_gain_g = max(2.5, 85.0 - 80.0 * min(1.0, time_elapsed / 3.0))
+            self.rt_instability_alert = True
+        elif mode == OperationalMode.MODE_ICF_LASER_POWER_IMBALANCE_JITTER:
+            self.timing_jitter_ps = 28.5 + float(np.random.normal(0, 2.0))
+            self.implosion_symmetry_rms = 1.95 + float(np.random.normal(0, 0.1))
+            self.target_gain_g = 18.0 + float(np.random.normal(0, 2.0))
+            self.rt_instability_alert = False
+        elif mode == OperationalMode.MODE_ICF_FINAL_OPTICS_DEBRIS_DAMAGE:
+            degrade = min(1.0, time_elapsed / 5.0)
+            self.optics_trans_pct = 98.5 - 18.0 * degrade
+            self.target_gain_g = 85.0 * ((self.optics_trans_pct / 100.0) ** 2)
+            self.rt_instability_alert = False
+        elif mode == OperationalMode.MODE_ICF_TARGET_TRACKING_INJECTION_MISS:
+            self.tracking_error_um = 52.0 + float(np.random.normal(0, 4.0))
+            self.target_gain_g = 0.05
+            self.rt_instability_alert = False
+        elif mode == OperationalMode.MODE_ICF_CHAMBER_CLEARING_PRESSURE_CHOKE:
+            self.chamber_pressure_pa = 4.8 + float(np.random.normal(0, 0.3))
+            self.target_gain_g = 22.0
+            self.rt_instability_alert = False
+        else: # MODE_ICF_NOMINAL_REPETITION_PULSE
+            self.laser_energy_mj = 2.15 + float(np.random.normal(0, 0.01))
+            self.repetition_rate_hz = 5.0
+            self.target_gain_g = 85.0 + float(np.random.normal(0, 1.2))
+            self.implosion_symmetry_rms = 0.45 + float(np.random.normal(0, 0.03))
+            self.ablation_pressure_mbar = 180.0 + float(np.random.normal(0, 2.0))
+            self.timing_jitter_ps = 4.2 + float(np.random.normal(0, 0.2))
+            self.optics_trans_pct = 98.5 + float(np.random.normal(0, 0.1))
+            self.tracking_error_um = 8.5 + float(np.random.normal(0, 0.5))
+            self.chamber_pressure_pa = 0.05 + float(np.random.normal(0, 0.005))
+            self.rt_instability_alert = False
+
+        return IcfCoreTelemetry(
+            driver_laser_energy_mj=self.laser_energy_mj,
+            repetition_rate_hz=self.repetition_rate_hz,
+            target_gain_g=self.target_gain_g,
+            implosion_symmetry_rms_pct=self.implosion_symmetry_rms,
+            capsule_ablation_pressure_mbar=self.ablation_pressure_mbar,
+            beam_timing_jitter_ps=self.timing_jitter_ps,
+            final_optics_transmission_pct=self.optics_trans_pct,
+            target_tracking_error_um=self.tracking_error_um,
+            target_chamber_pressure_pa=self.chamber_pressure_pa,
+            total_shots_fired=self.shots_count,
+            rayleigh_taylor_instability_alert=self.rt_instability_alert
+        )
+
+# ============================================================================
+# Main Master Multi-Subsystem & Multi-Reactor Digital Twin Engine
 # ============================================================================
 
 class DigitalTwinEngine:
-    def __init__(self, port=9004, api_port=9005):
+    def __init__(self, port=9004, api_port=9005, reactor_type=ReactorType.REACTOR_QI_STELLARATOR):
         self.port = port
         self.api_port = api_port
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"[DIGITAL-TWIN] Initializing SKHY PyTorch PINN Surrogate Engine on device: {self.device}")
+        print(f"[DIGITAL-TWIN] Initializing SKHY PyTorch PINN Multi-Reactor Engine on device: {self.device}")
 
         self.model = StellaratorPINN(input_dim=8, mesh_points=32).to(self.device)
         self.model.eval()
 
         self.sim_step = 0
+        self.active_reactor = reactor_type
         self.active_mode = OperationalMode.MODE_STEADY_STATE_NOMINAL
         self.mode_start_time = time.time()
 
-        # Initialize Subsystems
+        # Initialize Subsystem Twins
         self.coils_subsystem = HTSCoilsDigitalTwin()
         self.plasma_subsystem = PlasmaCoreDigitalTwin()
         self.divertor_subsystem = DivertorDigitalTwin()
         self.blanket_subsystem = BreedingBlanketDigitalTwin()
+        self.tokamak_subsystem = TokamakCoreDigitalTwin()
+        self.icf_subsystem = IcfCoreDigitalTwin()
 
         # UDP socket for sending multi-subsystem reports
         self.tx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    def set_reactor_type(self, reactor_type: ReactorType):
+        self.active_reactor = reactor_type
+        if reactor_type == ReactorType.REACTOR_TOKAMAK:
+            self.active_mode = OperationalMode.MODE_TOKAMAK_NOMINAL_BURNTIME
+        elif reactor_type == ReactorType.REACTOR_ICF:
+            self.active_mode = OperationalMode.MODE_ICF_NOMINAL_REPETITION_PULSE
+        else:
+            self.active_mode = OperationalMode.MODE_STEADY_STATE_NOMINAL
+        self.mode_start_time = time.time()
+        print(f"[DIGITAL-TWIN] Reactor Concept switched to: {ReactorType.Name(reactor_type)}")
 
     def set_mode(self, mode: OperationalMode):
         self.active_mode = mode
@@ -325,55 +482,96 @@ class DigitalTwinEngine:
         now_ns = int(time.time() * 1e9)
         time_in_mode = time.time() - self.mode_start_time
 
-        # Update Subsystems
+        # Update core physics based on active reactor type
         coil_telemetry = self.coils_subsystem.update(self.active_mode, time_in_mode)
         plasma_telemetry = self.plasma_subsystem.update(self.active_mode, time_in_mode)
         divertor_telemetry = self.divertor_subsystem.update(self.active_mode, time_in_mode)
+        tokamak_telemetry = self.tokamak_subsystem.update(self.active_mode, time_in_mode)
+        icf_telemetry = self.icf_subsystem.update(self.active_mode, time_in_mode)
 
         # --------------------------------------------------------------------
-        # Plant Power Balance Calculations (Sam Wurzel Framework)
+        # Multi-Physics Reactor Power Balance Calculations
         # --------------------------------------------------------------------
-        if self.active_mode == OperationalMode.MODE_STEADY_STATE_NOMINAL:
-            heating_mw = 25.0
-            q_sci = 10.2 + float(np.random.normal(0, 0.1))
-            fusion_mw = q_sci * heating_mw
-        elif self.active_mode == OperationalMode.MODE_PELLET_REFUELING_BURST:
-            heating_mw = 25.0
-            q_sci = 16.5 + float(np.random.normal(0, 0.3))
-            fusion_mw = q_sci * heating_mw
-        elif self.active_mode == OperationalMode.MODE_DIVERTOR_DETACHMENT_FAULT:
-            heating_mw = 25.0
-            q_sci = 9.8 + float(np.random.normal(0, 0.1))
-            fusion_mw = q_sci * heating_mw
-        elif self.active_mode == OperationalMode.MODE_IMPURITY_ACCUMULATION:
-            heating_mw = 25.0
-            q_sci = max(0.5, 10.2 - 8.5 * min(1.0, time_in_mode / 8.0))
-            fusion_mw = q_sci * heating_mw
-        elif self.active_mode == OperationalMode.MODE_HTS_COIL_HOTSPOT_QUENCH:
-            heating_mw = 5.0
-            q_sci = 0.0
-            fusion_mw = 0.0
-        elif self.active_mode == OperationalMode.MODE_STARTUP_RAMP:
-            ramp = min(1.0, time_in_mode / 10.0)
-            heating_mw = 5.0 + 20.0 * ramp
-            q_sci = 0.5 + 9.7 * ramp
-            fusion_mw = q_sci * heating_mw
-        else:
-            heating_mw = 25.0
-            q_sci = 10.2
-            fusion_mw = 255.0
+        if self.active_reactor == ReactorType.REACTOR_ICF:
+            # Pulsed Inertial Confinement Fusion Power Flow
+            driver_mj = icf_telemetry.driver_laser_energy_mj
+            rep_rate = icf_telemetry.repetition_rate_hz
+            gain_g = icf_telemetry.target_gain_g
+            heating_mw = driver_mj * rep_rate # Time-averaged laser energy delivered to chamber (MW)
+            q_sci = gain_g
+            fusion_mw = heating_mw * gain_g
 
+            eta_driver = 0.15 # Laser driver wall-plug electrical efficiency (~15%)
+            recirc_heat_mw = heating_mw / eta_driver
+            parasitic_cryo_mw = 12.0 # Pellet factory & cryogenic target positioner
+            eta_thermal = 0.38
+            total_recirc_mw = recirc_heat_mw + parasitic_cryo_mw
+
+        elif self.active_reactor == ReactorType.REACTOR_TOKAMAK:
+            # Advanced Tokamak Power Flow
+            heating_mw = 35.0 # Combined NBI, ECRH, ICRF auxiliary heating
+            if self.active_mode == OperationalMode.MODE_TOKAMAK_NOMINAL_BURNTIME:
+                q_sci = 10.5 + float(np.random.normal(0, 0.15))
+            elif self.active_mode == OperationalMode.MODE_TOKAMAK_MAJOR_DISRUPTION:
+                q_sci = 0.05
+            elif self.active_mode == OperationalMode.MODE_TOKAMAK_VERTICAL_DISPLACEMENT_EVENT:
+                q_sci = 3.2
+            elif self.active_mode == OperationalMode.MODE_TOKAMAK_UNMITIGATED_ELM_BURST:
+                q_sci = 8.5
+            elif self.active_mode == OperationalMode.MODE_TOKAMAK_NEOCLASSICAL_TEARING_MODE:
+                q_sci = 4.2
+            else:
+                q_sci = 9.5
+            fusion_mw = q_sci * heating_mw
+
+            eta_heating = 0.55
+            recirc_heat_mw = heating_mw / eta_heating
+            parasitic_cryo_mw = 14.0 # TF/PF/CS Superconducting coils
+            eta_thermal = 0.38
+            total_recirc_mw = recirc_heat_mw + parasitic_cryo_mw
+
+        else: # REACTOR_QI_STELLARATOR
+            if self.active_mode == OperationalMode.MODE_STEADY_STATE_NOMINAL:
+                heating_mw = 25.0
+                q_sci = 10.2 + float(np.random.normal(0, 0.1))
+                fusion_mw = q_sci * heating_mw
+            elif self.active_mode == OperationalMode.MODE_PELLET_REFUELING_BURST:
+                heating_mw = 25.0
+                q_sci = 16.5 + float(np.random.normal(0, 0.3))
+                fusion_mw = q_sci * heating_mw
+            elif self.active_mode == OperationalMode.MODE_DIVERTOR_DETACHMENT_FAULT:
+                heating_mw = 25.0
+                q_sci = 9.8 + float(np.random.normal(0, 0.1))
+                fusion_mw = q_sci * heating_mw
+            elif self.active_mode == OperationalMode.MODE_IMPURITY_ACCUMULATION:
+                heating_mw = 25.0
+                q_sci = max(0.5, 10.2 - 8.5 * min(1.0, time_in_mode / 8.0))
+                fusion_mw = q_sci * heating_mw
+            elif self.active_mode == OperationalMode.MODE_HTS_COIL_HOTSPOT_QUENCH:
+                heating_mw = 5.0
+                q_sci = 0.0
+                fusion_mw = 0.0
+            elif self.active_mode == OperationalMode.MODE_STARTUP_RAMP:
+                ramp = min(1.0, time_in_mode / 10.0)
+                heating_mw = 5.0 + 20.0 * ramp
+                q_sci = 0.5 + 9.7 * ramp
+                fusion_mw = q_sci * heating_mw
+            else:
+                heating_mw = 25.0
+                q_sci = 10.2
+                fusion_mw = 255.0
+
+            eta_heating = 0.60
+            recirc_heat_mw = heating_mw / eta_heating
+            parasitic_cryo_mw = 8.5 if self.active_mode != OperationalMode.MODE_HTS_COIL_HOTSPOT_QUENCH else 14.5
+            eta_thermal = 0.38
+            total_recirc_mw = recirc_heat_mw + parasitic_cryo_mw
+
+        # Universal Breeding Blanket
         blanket_telemetry = self.blanket_subsystem.update(fusion_mw, self.active_mode)
 
         total_exit_power_mw = fusion_mw + heating_mw
-        eta_thermal = 0.38
         gross_elec_mw = total_exit_power_mw * eta_thermal
-
-        eta_heating = 0.60
-        recirc_heat_mw = heating_mw / eta_heating
-        parasitic_cryo_mw = 8.5 if self.active_mode != OperationalMode.MODE_HTS_COIL_HOTSPOT_QUENCH else 14.5
-        total_recirc_mw = recirc_heat_mw + parasitic_cryo_mw
-
         net_elec_mw = gross_elec_mw - total_recirc_mw
         q_eng = gross_elec_mw / total_recirc_mw if total_recirc_mw > 0 else 0.0
         net_electricity = net_elec_mw > 0.0
@@ -434,24 +632,53 @@ class DigitalTwinEngine:
 
         mode_name = OperationalMode.Name(self.active_mode)
         mode_desc = {
+            # Stellarator
             OperationalMode.MODE_STEADY_STATE_NOMINAL: "Normal Steady-State Burn: QI high-confinement flattop",
             OperationalMode.MODE_DIVERTOR_DETACHMENT_FAULT: "Divertor Detachment Anomaly: Peak heat flux > 10 MW/m^2",
             OperationalMode.MODE_HTS_COIL_HOTSPOT_QUENCH: "REBCO Coil Hotspot: Quench runaway in Module 3",
             OperationalMode.MODE_PELLET_REFUELING_BURST: "Cryogenic D-T Pellet Injection: High density alpha burst",
             OperationalMode.MODE_IMPURITY_ACCUMULATION: "Tungsten Impurity Core Influx: Radiative cooling collapse",
-            OperationalMode.MODE_STARTUP_RAMP: "Startup Ignition Sequence: Coil ramp-up & ECRH microwave breakdown"
-        }.get(self.active_mode, "Unknown Mode")
+            OperationalMode.MODE_STARTUP_RAMP: "Startup Ignition Sequence: Coil ramp-up & ECRH microwave breakdown",
+            # Tokamak
+            OperationalMode.MODE_TOKAMAK_NOMINAL_BURNTIME: "Tokamak Nominal H-Mode Burn: Ip=15MA inductive flattop",
+            OperationalMode.MODE_TOKAMAK_MAJOR_DISRUPTION: "Tokamak Major Disruption: Thermal quench & current collapse",
+            OperationalMode.MODE_TOKAMAK_VERTICAL_DISPLACEMENT_EVENT: "Tokamak VDE: Vertical stability lost, wall impact",
+            OperationalMode.MODE_TOKAMAK_UNMITIGATED_ELM_BURST: "Tokamak Unmitigated ELM: Divertor target heat spike",
+            OperationalMode.MODE_TOKAMAK_RUNAWAY_ELECTRON_AVALANCHE: "Tokamak Runaway Beam: Relativistic electron avalanche",
+            OperationalMode.MODE_TOKAMAK_NEOCLASSICAL_TEARING_MODE: "Tokamak NTM Island: Magnetic island degrades tau_E",
+            # ICF
+            OperationalMode.MODE_ICF_NOMINAL_REPETITION_PULSE: "ICF High-Rep Rate Pulse: 5Hz shot flattop, G=85",
+            OperationalMode.MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY: "ICF Rayleigh-Taylor Instability: Capsule mix collapse",
+            OperationalMode.MODE_ICF_LASER_POWER_IMBALANCE_JITTER: "ICF Laser Jitter: Power imbalance & timing jitter",
+            OperationalMode.MODE_ICF_FINAL_OPTICS_DEBRIS_DAMAGE: "ICF Optical Damage: Debris shield transmission degraded",
+            OperationalMode.MODE_ICF_TARGET_TRACKING_INJECTION_MISS: "ICF Target Injection Miss: Off-center dud shot",
+            OperationalMode.MODE_ICF_CHAMBER_CLEARING_PRESSURE_CHOKE: "ICF Chamber Choke: Incomplete post-shot vapor exhaust"
+        }.get(self.active_mode, f"Active Mode: {mode_name}")
 
+        # Construct polymorphic SubsystemTelemetryReport
         report = SubsystemTelemetryReport(
             envelope=envelope,
+            reactor_type=self.active_reactor,
             active_mode=self.active_mode,
             mode_description=mode_desc,
+            blanket=blanket_telemetry,
+            power_balance=power_balance_state,
             coil_cryo=coil_telemetry,
             plasma_core=plasma_telemetry,
-            divertor=divertor_telemetry,
-            blanket=blanket_telemetry,
-            power_balance=power_balance_state
+            divertor=divertor_telemetry
         )
+
+        # Populate appropriate reactor_core oneof
+        if self.active_reactor == ReactorType.REACTOR_TOKAMAK:
+            report.tokamak_core.CopyFrom(tokamak_telemetry)
+        elif self.active_reactor == ReactorType.REACTOR_ICF:
+            report.icf_core.CopyFrom(icf_telemetry)
+        else:
+            report.stellarator_core.CopyFrom(StellaratorCoreTelemetry(
+                coil_cryo=coil_telemetry,
+                plasma_core=plasma_telemetry,
+                divertor=divertor_telemetry
+            ))
 
         return report
 
@@ -479,10 +706,11 @@ class DigitalTwinEngine:
 
                     if self.sim_step % 20 == 0 or diag.quench_detected:
                         pb = report.power_balance
+                        reactor_name = ReactorType.Name(report.reactor_type)
                         print(
-                            f"[DIGITAL-TWIN] Step {self.sim_step:04d} | Mode: {report.mode_description[:25]}... | "
-                            f"Q_sci: {pb.scientific_gain_q_sci:.2f} | P_net: {pb.net_electric_power_mw:.1f} MW | "
-                            f"Coil: {report.coil_cryo.coil_temperature_k:.1f}K | Div: {report.divertor.peak_heat_flux_mw_per_m2:.1f} MW/m²"
+                            f"[DIGITAL-TWIN] Step {self.sim_step:04d} | Reactor: {reactor_name} | "
+                            f"Mode: {report.mode_description[:30]}... | "
+                            f"Q_sci: {pb.scientific_gain_q_sci:.2f} | P_net: {pb.net_electric_power_mw:.1f} MW"
                         )
                 except Exception:
                     pass
@@ -493,22 +721,20 @@ class DigitalTwinEngine:
             self.tx_sock.close()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="SKHY Modular Stellarator Digital Twin Engine")
+    parser = argparse.ArgumentParser(description="SKHY Multi-Reactor Digital Twin Engine")
     parser.add_argument("--port", type=int, default=9004, help="UDP listening port")
     parser.add_argument("--api-port", type=int, default=9005, help="Data Lake API UDP port")
-    parser.add_argument("--mode", type=str, default="steady_state",
-                        choices=["steady_state", "divertor_fault", "quench", "pellet_burst", "impurity", "startup"])
+    parser.add_argument("--reactor", type=str, default="stellarator",
+                        choices=["stellarator", "tokamak", "icf"], help="Active fusion reactor concept")
+    parser.add_argument("--mode", type=str, default="nominal", help="Initial operational mode")
     args = parser.parse_args()
 
-    mode_map = {
-        "steady_state": OperationalMode.MODE_STEADY_STATE_NOMINAL,
-        "divertor_fault": OperationalMode.MODE_DIVERTOR_DETACHMENT_FAULT,
-        "quench": OperationalMode.MODE_HTS_COIL_HOTSPOT_QUENCH,
-        "pellet_burst": OperationalMode.MODE_PELLET_REFUELING_BURST,
-        "impurity": OperationalMode.MODE_IMPURITY_ACCUMULATION,
-        "startup": OperationalMode.MODE_STARTUP_RAMP
+    reactor_map = {
+        "stellarator": ReactorType.REACTOR_QI_STELLARATOR,
+        "tokamak": ReactorType.REACTOR_TOKAMAK,
+        "icf": ReactorType.REACTOR_ICF
     }
 
-    engine = DigitalTwinEngine(port=args.port, api_port=args.api_port)
-    engine.set_mode(mode_map[args.mode])
+    engine = DigitalTwinEngine(port=args.port, api_port=args.api_port, reactor_type=reactor_map[args.reactor])
     engine.listen_and_evaluate()
+

@@ -8,6 +8,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- KaTeX CSS & JS for LaTeX Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <!-- Marked for GFM Markdown Rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <!-- Mermaid CDN for client-side diagram rendering -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -27,7 +32,7 @@
             <nav class="nav-links">
                 <button class="nav-btn active" data-tab="interactive-sim">Quench Simulator</button>
                 <button class="nav-btn" data-tab="subsystems-twin">Subsystems & Modes Twin</button>
-                <button class="nav-btn" data-tab="power-balance">Scientific Gain ($Q_{\text{sci}}$) Plant</button>
+                <button class="nav-btn" data-tab="power-balance">Scientific Gain (Q_sci) Plant</button>
                 <button class="nav-btn" data-tab="purdue-explorer">Purdue 6-Tier Architecture</button>
                 <button class="nav-btn" data-tab="pinn-twin">3D PINN Digital Twin</button>
                 <button class="nav-btn" data-tab="guide-doc">Beginner Guide & Diagrams</button>
@@ -665,13 +670,13 @@ stateDiagram-v2
 
         <!-- SECTION 4: Beginner Guide & Markdown Diagrams -->
         <section id="guide-doc" class="tab-pane">
-            <div class="section-header">
+            <div class="section-header tutorial-section-header">
                 <h2>📖 Beginner's Tutorial & Fusion Physics Guide</h2>
-                <p class="section-desc">Step-by-step breakdown of fusion physics, magnet quench, and TAMI software architecture.</p>
+                <p class="section-desc">Step-by-step breakdown of fusion physics, magnet quench, and TAMI software architecture with LaTeX mathematics and Mermaid diagrams.</p>
             </div>
 
-            <div class="card glass-card markdown-container" id="markdown-viewer">
-                <div class="loading-spinner">Loading tutorial content and rendering Mermaid diagrams...</div>
+            <div class="tutorial-white-container" id="markdown-viewer">
+                <div class="loading-spinner">Loading tutorial content, typesetting LaTeX math, and rendering Mermaid diagrams...</div>
             </div>
         </section>
 

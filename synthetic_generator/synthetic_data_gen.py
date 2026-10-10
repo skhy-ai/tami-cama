@@ -27,9 +27,10 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, ROOT_DIR)
 
 from python_common.skhy_telemetry_pb2 import (
-    PurdueLevel, PayloadType, QuenchSeverity, OperationalMode,
+    PurdueLevel, PayloadType, QuenchSeverity, OperationalMode, ReactorType,
     Envelope, QuenchDiagnostic, CoilCryoTelemetry, PlasmaCoreTelemetry,
-    DivertorTelemetry, BlanketTelemetry, DigitalTwinState, SubsystemTelemetryReport
+    DivertorTelemetry, BlanketTelemetry, DigitalTwinState, SubsystemTelemetryReport,
+    TokamakCoreTelemetry, IcfCoreTelemetry, StellaratorCoreTelemetry
 )
 
 class StellaratorSyntheticGenerator:
@@ -48,6 +49,7 @@ class StellaratorSyntheticGenerator:
         self.udp_api_port = udp_api_port
 
         self.seq_num = 0
+        self.active_reactor = ReactorType.REACTOR_QI_STELLARATOR
         self.active_mode = OperationalMode.MODE_STEADY_STATE_NOMINAL
         self.mode_start_time = time.time()
         self.cycle_mode_active = False
@@ -71,6 +73,17 @@ class StellaratorSyntheticGenerator:
             print(f"[SYNTHETIC-GEN] Note: TCP Hub not reachable ({e}) - continuing UDP broadcast")
             self.tcp_sock = None
             return False
+
+    def set_reactor_type(self, reactor_type: ReactorType):
+        self.active_reactor = reactor_type
+        if reactor_type == ReactorType.REACTOR_TOKAMAK:
+            self.active_mode = OperationalMode.MODE_TOKAMAK_NOMINAL_BURNTIME
+        elif reactor_type == ReactorType.REACTOR_ICF:
+            self.active_mode = OperationalMode.MODE_ICF_NOMINAL_REPETITION_PULSE
+        else:
+            self.active_mode = OperationalMode.MODE_STEADY_STATE_NOMINAL
+        self.mode_start_time = time.time()
+        print(f"\n[SYNTHETIC-GEN] >>> REACTOR CONCEPT SWITCHED TO: {ReactorType.Name(reactor_type)} <<<\n")
 
     def set_mode(self, mode: OperationalMode):
         self.active_mode = mode
@@ -423,17 +436,62 @@ class StellaratorSyntheticGenerator:
             net_electricity_achieved=net_electricity
         )
 
+        # Build reactor-specific core telemetry
+        tokamak_msg = TokamakCoreTelemetry(
+            plasma_current_ma=15.0 if mode != OperationalMode.MODE_TOKAMAK_MAJOR_DISRUPTION else max(0.1, 15.0 - 5.0 * elapsed),
+            central_solenoid_current_ka=42.0 - 0.1 * elapsed,
+            safety_factor_q95=3.25 if mode != OperationalMode.MODE_TOKAMAK_MAJOR_DISRUPTION else 1.2,
+            loop_voltage_v=0.12 if mode != OperationalMode.MODE_TOKAMAK_MAJOR_DISRUPTION else 120.0,
+            poloidal_divertor_heat_flux_mw_m2=heat_flux_mw if self.active_reactor == ReactorType.REACTOR_TOKAMAK else 6.5,
+            vertical_displacement_z_mm=120.0 * min(1.0, elapsed / 3.0) if mode == OperationalMode.MODE_TOKAMAK_VERTICAL_DISPLACEMENT_EVENT else 0.0,
+            elm_frequency_hz=45.0 if mode == OperationalMode.MODE_TOKAMAK_UNMITIGATED_ELM_BURST else 12.0,
+            disruption_warning=mode in [OperationalMode.MODE_TOKAMAK_MAJOR_DISRUPTION, OperationalMode.MODE_TOKAMAK_VERTICAL_DISPLACEMENT_EVENT],
+            runaway_electron_current_ma=3.8 if mode == OperationalMode.MODE_TOKAMAK_RUNAWAY_ELECTRON_AVALANCHE else 0.0,
+            internal_inductance_li=1.65 if mode == OperationalMode.MODE_TOKAMAK_MAJOR_DISRUPTION else 0.85,
+            greenwald_density_fraction=0.72
+        )
+
+        icf_msg = IcfCoreTelemetry(
+            driver_laser_energy_mj=2.15,
+            repetition_rate_hz=5.0,
+            target_gain_g=85.0 if mode == OperationalMode.MODE_ICF_NOMINAL_REPETITION_PULSE else (4.2 if mode == OperationalMode.MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY else 18.0),
+            implosion_symmetry_rms_pct=2.85 if mode == OperationalMode.MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY else 0.45,
+            capsule_ablation_pressure_mbar=180.0,
+            beam_timing_jitter_ps=28.5 if mode == OperationalMode.MODE_ICF_LASER_POWER_IMBALANCE_JITTER else 4.2,
+            final_optics_transmission_pct=81.0 if mode == OperationalMode.MODE_ICF_FINAL_OPTICS_DEBRIS_DAMAGE else 98.5,
+            target_tracking_error_um=52.0 if mode == OperationalMode.MODE_ICF_TARGET_TRACKING_INJECTION_MISS else 8.5,
+            target_chamber_pressure_pa=4.8 if mode == OperationalMode.MODE_ICF_CHAMBER_CLEARING_PRESSURE_CHOKE else 0.05,
+            total_shots_fired=12500 + self.seq_num * 2,
+            rayleigh_taylor_instability_alert=mode == OperationalMode.MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY
+        )
+
         mode_desc_map = {
+            # Stellarator
             OperationalMode.MODE_STEADY_STATE_NOMINAL: "Normal Steady-State Burn: QI high-confinement flattop",
             OperationalMode.MODE_DIVERTOR_DETACHMENT_FAULT: "Divertor Detachment Anomaly: Peak heat flux > 10 MW/m^2",
             OperationalMode.MODE_HTS_COIL_HOTSPOT_QUENCH: "REBCO Coil Hotspot: Quench runaway in Module 3",
             OperationalMode.MODE_PELLET_REFUELING_BURST: "Cryogenic D-T Pellet Injection: High density alpha burst",
             OperationalMode.MODE_IMPURITY_ACCUMULATION: "Tungsten Impurity Core Influx: Radiative cooling collapse",
-            OperationalMode.MODE_STARTUP_RAMP: "Startup Ignition Sequence: Coil ramp-up & ECRH breakdown"
+            OperationalMode.MODE_STARTUP_RAMP: "Startup Ignition Sequence: Coil ramp-up & ECRH breakdown",
+            # Tokamak
+            OperationalMode.MODE_TOKAMAK_NOMINAL_BURNTIME: "Tokamak Nominal H-Mode Burn: Ip=15MA inductive flattop",
+            OperationalMode.MODE_TOKAMAK_MAJOR_DISRUPTION: "Tokamak Major Disruption: Thermal quench & current collapse",
+            OperationalMode.MODE_TOKAMAK_VERTICAL_DISPLACEMENT_EVENT: "Tokamak VDE: Vertical stability lost, wall impact",
+            OperationalMode.MODE_TOKAMAK_UNMITIGATED_ELM_BURST: "Tokamak Unmitigated ELM: Divertor target heat spike",
+            OperationalMode.MODE_TOKAMAK_RUNAWAY_ELECTRON_AVALANCHE: "Tokamak Runaway Beam: Relativistic electron avalanche",
+            OperationalMode.MODE_TOKAMAK_NEOCLASSICAL_TEARING_MODE: "Tokamak NTM Island: Magnetic island degrades tau_E",
+            # ICF
+            OperationalMode.MODE_ICF_NOMINAL_REPETITION_PULSE: "ICF High-Rep Rate Pulse: 5Hz shot flattop, G=85",
+            OperationalMode.MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY: "ICF Rayleigh-Taylor Instability: Capsule mix collapse",
+            OperationalMode.MODE_ICF_LASER_POWER_IMBALANCE_JITTER: "ICF Laser Jitter: Power imbalance & timing jitter",
+            OperationalMode.MODE_ICF_FINAL_OPTICS_DEBRIS_DAMAGE: "ICF Optical Damage: Debris shield transmission degraded",
+            OperationalMode.MODE_ICF_TARGET_TRACKING_INJECTION_MISS: "ICF Target Injection Miss: Off-center dud shot",
+            OperationalMode.MODE_ICF_CHAMBER_CLEARING_PRESSURE_CHOKE: "ICF Chamber Choke: Incomplete post-shot vapor exhaust"
         }
 
         subsystem_report = SubsystemTelemetryReport(
             envelope=envelope,
+            reactor_type=self.active_reactor,
             active_mode=self.active_mode,
             mode_description=mode_desc_map.get(self.active_mode, "Operational Mode"),
             coil_cryo=coil_msg,
@@ -442,6 +500,17 @@ class StellaratorSyntheticGenerator:
             blanket=blanket_msg,
             power_balance=power_twin
         )
+
+        if self.active_reactor == ReactorType.REACTOR_TOKAMAK:
+            subsystem_report.tokamak_core.CopyFrom(tokamak_msg)
+        elif self.active_reactor == ReactorType.REACTOR_ICF:
+            subsystem_report.icf_core.CopyFrom(icf_msg)
+        else:
+            subsystem_report.stellarator_core.CopyFrom(StellaratorCoreTelemetry(
+                coil_cryo=coil_msg,
+                plasma_core=plasma_msg,
+                divertor=divertor_msg
+            ))
 
         return quench_packet, subsystem_report
 
@@ -527,31 +596,33 @@ class StellaratorSyntheticGenerator:
             self.udp_sock.close()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="SKHY Stellarator High-Fidelity Synthetic Telemetry Generator")
+    parser = argparse.ArgumentParser(description="SKHY Multi-Reactor High-Fidelity Synthetic Telemetry Generator")
     parser.add_argument("--freq", type=float, default=20.0, help="Publishing frequency in Hz")
     parser.add_argument("--quench-after", type=float, default=None, help="Seconds before auto-triggering quench event")
-    parser.add_argument("--mode", type=str, default="steady_state",
-                        choices=["steady_state", "divertor_fault", "quench", "pellet_burst", "impurity", "startup", "cycle"],
-                        help="Initial operational mode or automated cycle")
+    parser.add_argument("--reactor", type=str, default="stellarator",
+                        choices=["stellarator", "tokamak", "icf"], help="Active fusion reactor concept")
+    parser.add_argument("--mode", type=str, default="nominal",
+                        help="Initial operational mode or automated cycle ('cycle')")
     parser.add_argument("--cycle-interval", type=float, default=10.0, help="Seconds per mode when in cycle mode")
     parser.add_argument("--sensor-id", type=str, default="FOAS-HTS-COIL-03A", help="Primary sensor ID")
     args = parser.parse_args()
 
-    mode_map = {
-        "steady_state": OperationalMode.MODE_STEADY_STATE_NOMINAL,
-        "divertor_fault": OperationalMode.MODE_DIVERTOR_DETACHMENT_FAULT,
-        "quench": OperationalMode.MODE_HTS_COIL_HOTSPOT_QUENCH,
-        "pellet_burst": OperationalMode.MODE_PELLET_REFUELING_BURST,
-        "impurity": OperationalMode.MODE_IMPURITY_ACCUMULATION,
-        "startup": OperationalMode.MODE_STARTUP_RAMP
+    reactor_map = {
+        "stellarator": ReactorType.REACTOR_QI_STELLARATOR,
+        "tokamak": ReactorType.REACTOR_TOKAMAK,
+        "icf": ReactorType.REACTOR_ICF
     }
 
     gen = StellaratorSyntheticGenerator(sensor_id=args.sensor_id)
+    gen.set_reactor_type(reactor_map.get(args.reactor, ReactorType.REACTOR_QI_STELLARATOR))
 
     if args.mode == "cycle":
         gen.cycle_mode_active = True
-        gen.set_mode(OperationalMode.MODE_STARTUP_RAMP)
-    else:
-        gen.set_mode(mode_map[args.mode])
+    elif args.mode != "nominal":
+        # Mode override
+        for m in OperationalMode.values():
+            if OperationalMode.Name(m).lower().endswith(args.mode.lower()):
+                gen.set_mode(m)
+                break
 
     gen.publish_loop(frequency_hz=args.freq, mode_cycle_interval=args.cycle_interval, quench_after_sec=args.quench_after)

@@ -379,7 +379,7 @@ function init3DDigitalTwinCanvas() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* 5. Fetch TUTORIAL.md & Initialize Mermaid Diagrams                        */
+/* 5. Fetch TUTORIAL.md, Render LaTeX (KaTeX) & Mermaid Diagrams             */
 /* -------------------------------------------------------------------------- */
 function initMarkdownTutorial() {
     const viewer = document.getElementById('markdown-viewer');
@@ -387,73 +387,174 @@ function initMarkdownTutorial() {
 
     fetch('/TUTORIAL.md')
         .then(res => {
-            if (!res.ok) throw new Error('Local tutorial markdown file');
+            if (!res.ok) throw new Error('Local tutorial markdown file not found');
             return res.text();
         })
         .then(md => {
-            viewer.innerHTML = parseMarkdownToHTML(md);
+            viewer.innerHTML = renderMarkdownWithMathAndMermaid(md);
             renderMermaidDiagrams();
         })
         .catch(err => {
-            // Fallback content if standalone page load
+            console.error('Error fetching TUTORIAL.md:', err);
             viewer.innerHTML = `
-                <h2>📖 Beginner's Tutorial Loaded</h2>
+                <h2>📖 Beginner's Tutorial Loaded (Offline Mode)</h2>
                 <p>Welcome to the SKHY TAMI Architecture Tutorial. For full offline reading, inspect the <a href="/TUTORIAL.md" target="_blank">TUTORIAL.md</a> file in the root directory.</p>
                 <blockquote>All fusion physics concepts are sourced from <a href="https://www.fusionenergybase.com/articles?tag=physics" target="_blank">Fusion Energy Base</a>.</blockquote>
             `;
         });
 }
 
-function parseMarkdownToHTML(md) {
-    let html = md
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function renderMarkdownWithMathAndMermaid(rawMarkdown) {
+    if (!rawMarkdown) return '';
+
+    const mermaidBlocks = [];
+    const displayMathBlocks = [];
+    const inlineMathBlocks = [];
+
+    let processed = rawMarkdown;
+
+    // 1. Extract and preserve Mermaid code blocks: ```mermaid ... ```
+    processed = processed.replace(/```mermaid\s*[\r\n]+([\s\S]*?)```/gi, (match, code) => {
+        const id = mermaidBlocks.length;
+        mermaidBlocks.push(code.trim());
+        return `\n\n%%MERMAID_BLOCK_${id}%%\n\n`;
+    });
+
+    // 2. Extract and preserve Display Math: $$ ... $$
+    processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, math) => {
+        const id = displayMathBlocks.length;
+        displayMathBlocks.push(math.trim());
+        return `\n\n%%MATH_DISPLAY_${id}%%\n\n`;
+    });
+
+    // 3. Extract and preserve Inline Math: $ ... $ (exclude escaped \$ and newlines)
+    processed = processed.replace(/(?<!\\)\$([^\$\r\n]+?)(?<!\\)\$/g, (match, math) => {
+        const id = inlineMathBlocks.length;
+        inlineMathBlocks.push(math.trim());
+        return `%%MATH_INLINE_${id}%%`;
+    });
+
+    // 4. Parse Markdown into HTML using marked.js
+    let html = '';
+    if (window.marked && typeof window.marked.parse === 'function') {
+        window.marked.setOptions({
+            gfm: true,
+            breaks: false
+        });
+        html = window.marked.parse(processed);
+    } else {
+        html = fallbackMarkdownParser(processed);
+    }
+
+    // 5. Re-insert and render Display Math with KaTeX
+    html = html.replace(/<p>%%MATH_DISPLAY_(\d+)%%<\/p>|%%MATH_DISPLAY_(\d+)%%/g, (match, p1, p2) => {
+        const id = parseInt(p1 !== undefined ? p1 : p2, 10);
+        const mathCode = displayMathBlocks[id] || '';
+        if (window.katex && typeof window.katex.renderToString === 'function') {
+            try {
+                const rendered = window.katex.renderToString(mathCode, {
+                    displayMode: true,
+                    throwOnError: false
+                });
+                return `<div class="math-display-block">${rendered}</div>`;
+            } catch (e) {
+                console.warn('KaTeX display error:', e);
+                return `<div class="math-display-block"><code>$$${escapeHtml(mathCode)}$$</code></div>`;
+            }
+        }
+        return `<div class="math-display-block"><code>$$${escapeHtml(mathCode)}$$</code></div>`;
+    });
+
+    // 6. Re-insert and render Inline Math with KaTeX
+    html = html.replace(/%%MATH_INLINE_(\d+)%%/g, (match, idStr) => {
+        const id = parseInt(idStr, 10);
+        const mathCode = inlineMathBlocks[id] || '';
+        if (window.katex && typeof window.katex.renderToString === 'function') {
+            try {
+                const rendered = window.katex.renderToString(mathCode, {
+                    displayMode: false,
+                    throwOnError: false
+                });
+                return `<span class="math-inline">${rendered}</span>`;
+            } catch (e) {
+                console.warn('KaTeX inline error:', e);
+                return `<span class="math-inline"><code>$${escapeHtml(mathCode)}$</code></span>`;
+            }
+        }
+        return `<span class="math-inline"><code>$${escapeHtml(mathCode)}$</code></span>`;
+    });
+
+    // 7. Re-insert Mermaid blocks
+    html = html.replace(/<p>%%MERMAID_BLOCK_(\d+)%%<\/p>|%%MERMAID_BLOCK_(\d+)%%/g, (match, p1, p2) => {
+        const id = parseInt(p1 !== undefined ? p1 : p2, 10);
+        const code = mermaidBlocks[id] || '';
+        return `<div class="mermaid-container"><pre class="mermaid">${escapeHtml(code)}</pre></div>`;
+    });
+
+    return html;
+}
+
+function fallbackMarkdownParser(md) {
+    return md
         .replace(/^### (.*$)/gim, '<h3>$1</h3>')
         .replace(/^## (.*$)/gim, '<h2>$1</h2>')
         .replace(/^# (.*$)/gim, '<h1>$1</h1>')
         .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
-        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-        .replace(/\*(.*)\*/gim, '<em>$1</em>')
+        .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/gim, '<em>$1</em>')
         .replace(/`([^`]+)`/gim, '<code>$1</code>')
         .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank">$1</a>')
-        .replace(/\n\n/gim, '<br>');
-
-    // Convert ```mermaid block to <pre class="mermaid">
-    html = html.replace(/```mermaid\n([\s\S]*?)\n```/gim, '<pre class="mermaid">$1</pre>');
-    return html;
+        .replace(/\n\n/gim, '<br><br>');
 }
 
-function renderMermaidDiagrams() {
-    if (window.mermaid) {
-        try {
-            mermaid.initialize({
-                startOnLoad: false,
-                theme: 'dark',
-                securityLevel: 'loose',
-                themeVariables: {
-                    primaryColor: '#121826',
-                    primaryTextColor: '#F0F4F8',
-                    primaryBorderColor: '#00F2FE',
-                    lineColor: '#00F2FE',
-                    secondaryColor: '#1A2234',
-                    tertiaryColor: '#0A0D14'
-                }
-            });
-            // Re-render any unrendered mermaid elements
-            const mermaidEls = document.querySelectorAll('.mermaid');
-            mermaidEls.forEach((el, idx) => {
-                // If not already processed into svg
-                if (!el.getAttribute('data-processed')) {
-                    el.setAttribute('id', `mermaid-diagram-${idx}-${Date.now()}`);
-                    try {
-                        mermaid.init(undefined, el);
-                        el.setAttribute('data-processed', 'true');
-                    } catch (err) {
-                        console.log("Mermaid init note:", err);
-                    }
-                }
-            });
-        } catch (e) {
-            console.log("Mermaid global note:", e);
+async function renderMermaidDiagrams() {
+    if (!window.mermaid) return;
+
+    try {
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            themeVariables: {
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '14px',
+                primaryColor: '#F0F9FF',
+                primaryBorderColor: '#0284C7',
+                primaryTextColor: '#0F172A',
+                lineColor: '#0284C7',
+                secondaryColor: '#F8FAFC',
+                secondaryBorderColor: '#94A3B8',
+                secondaryTextColor: '#1E293B',
+                tertiaryColor: '#FFFFFF',
+                tertiaryBorderColor: '#CBD5E1',
+                tertiaryTextColor: '#334155'
+            }
+        });
+
+        const elements = document.querySelectorAll('.mermaid:not([data-processed="true"])');
+        if (elements.length > 0) {
+            if (typeof mermaid.run === 'function') {
+                await mermaid.run({
+                    nodes: Array.from(elements)
+                });
+                elements.forEach(el => el.setAttribute('data-processed', 'true'));
+            } else if (typeof mermaid.init === 'function') {
+                mermaid.init(undefined, elements);
+                elements.forEach(el => el.setAttribute('data-processed', 'true'));
+            }
         }
+    } catch (err) {
+        console.warn("Mermaid render notice:", err);
     }
 }
 

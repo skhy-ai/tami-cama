@@ -58,16 +58,16 @@ There are two main doughnut-shaped (toroidal) reactor designs:
 
 ```mermaid
 graph TD
-    A[Magnetic Confinement Fusion] --> B[Tokamak]
-    A --> C[Quasi-Isodynamic Stellarator]
+    A["Magnetic Confinement Fusion"] --> B["Tokamak"]
+    A --> C["Quasi-Isodynamic Stellarator"]
     
-    B --> B1[Simple Doughnut Magnet Coils]
-    B --> B2[Requires Driven Plasma Current]
-    B --> B3[Risk of Sudden Plasma Disruptions]
+    B --> B1["Simple Doughnut Magnet Coils"]
+    B --> B2["Requires Driven Plasma Current"]
+    B --> B3["Risk of Sudden Plasma Disruptions"]
     
-    C --> C1[Complex 3D Superconducting Coils]
-    C --> C2[No Internal Plasma Current Needed]
-    C --> C3[Continuous Steady-State Operation]
+    C --> C1["Complex 3D Superconducting Coils"]
+    C --> C2["No Internal Plasma Current Needed"]
+    C --> C3["Continuous Steady-State Operation"]
 ```
 
 Our software codebase is built specifically for **Quasi-Isodynamic (QI) Superconducting Stellarators** engineered by **SKHY**.
@@ -80,21 +80,21 @@ A critical concept detailed on [Fusion Energy Base - Scientific Gain and Fusion 
 
 ```mermaid
 flowchart LR
-    P_heat[Electricity from Grid / Recirculation] -->|Heating Eff eta_heat ~ 60%| P_in[P_heating Entering Plasma]
-    P_in --> Vacuum[Plasma Vacuum Vessel Q_sci = P_fusion / P_heating]
-    Vacuum -->|P_fusion + P_heating| P_exit[Total Exiting Thermal Power]
-    P_exit -->|Thermal Eff eta_th ~ 38%| P_gross[Gross Electricity Generated]
-    P_gross --> P_recirc[Recirculating Power P_heating/eta_heat + P_cryo]
-    P_gross --> P_net[Net Electricity Delivered to Grid P_net > 0]
+    P_heat["Electricity from Grid / Recirculation"] -->|Heating Eff eta_heat ~ 60%| P_in["P_heating Entering Plasma"]
+    P_in --> Vacuum["Plasma Vacuum Vessel: Q_sci = P_fusion / P_heating"]
+    Vacuum -->|P_fusion + P_heating| P_exit["Total Exiting Thermal Power"]
+    P_exit -->|Thermal Eff eta_th ~ 38%| P_gross["Gross Electricity Generated"]
+    P_gross --> P_recirc["Recirculating Power: P_heating/eta_heat + P_cryo"]
+    P_gross --> P_net["Net Electricity Delivered to Grid: P_net > 0"]
 ```
 
 ### Key Power Flow Equations:
-1. **Scientific Gain**: $Q_{\text{sci}} = \frac{P_{\text{fusion}}}{P_{\text{heating}}}$
-2. **Total Exiting Thermal Power**: $P_{\text{exit}} = P_{\text{fusion}} + P_{\text{heating}} = (Q_{\text{sci}} + 1) \cdot P_{\text{heating}}$
-3. **Gross Electricity Generated**: $P_{\text{gross\_elec}} = \eta_{\text{thermal}} \cdot P_{\text{exit}}$
-4. **Recirculating Power Needed**: $P_{\text{recirc\_heat}} = \frac{P_{\text{heating}}}{\eta_{\text{heating}}} + P_{\text{cryo}}$
-5. **Net Electricity to Grid**: $P_{\text{net}} = P_{\text{gross\_elec}} - P_{\text{recirc\_heat}}$
-6. **Engineering Gain**: $Q_{\text{eng}} = \frac{P_{\text{gross\_elec}}}{P_{\text{recirc\_heat}}}$
+1. **Scientific Gain**: $$Q_{\text{sci}} = \frac{P_{\text{fusion}}}{P_{\text{heating}}}$$
+2. **Total Exiting Thermal Power**: $$P_{\text{exit}} = P_{\text{fusion}} + P_{\text{heating}} = (Q_{\text{sci}} + 1) \cdot P_{\text{heating}}$$
+3. **Gross Electricity Generated**: $$P_{\text{gross\_elec}} = \eta_{\text{thermal}} \cdot P_{\text{exit}}$$
+4. **Recirculating Power Needed**: $$P_{\text{recirc\_heat}} = \frac{P_{\text{heating}}}{\eta_{\text{heating}}} + P_{\text{cryo}}$$
+5. **Net Electricity to Grid**: $$P_{\text{net}} = P_{\text{gross\_elec}} - P_{\text{recirc\_heat}}$$
+6. **Engineering Gain**: $$Q_{\text{eng}} = \frac{P_{\text{gross\_elec}}}{P_{\text{recirc\_heat}}}$$
 
 > **Why $Q_{\text{sci}} = 1.0$ is NOT enough for a power plant**:
 > At $Q_{\text{sci}} = 1.0$, $P_{\text{fusion}} = P_{\text{heating}}$. However, because converting electricity to heat ($\eta_{\text{heating}} \approx 60\%$) and converting thermal energy to electricity ($\eta_{\text{thermal}} \approx 38\%$) both have energy losses, $Q_{\text{sci}}$ must reach **$\sim 4.0\text{--}8.0$** before the power plant produces even 1 Watt of net grid power!
@@ -107,35 +107,35 @@ A commercial fusion power plant is an interconnected ecosystem of 5 core enginee
 
 ```mermaid
 graph TD
-    subgraph S1 [Subsystem 1: HTS Magnet Coils & Cryogenics]
-        Coils[REBCO Non-Planar Coils 20K] --> BField[5.5 Tesla QI Confinement Field]
-        Coils --> Stress[Lorentz Stress Tracking 145 MPa]
+    subgraph S1 ["Subsystem 1: HTS Magnet Coils & Cryogenics"]
+        Coils["REBCO Non-Planar Coils 20K"] --> BField["5.5 Tesla QI Confinement Field"]
+        Coils --> Stress["Lorentz Stress Tracking 145 MPa"]
     end
 
-    subgraph S2 [Subsystem 2: Plasma Core & Confinement]
-        BField --> Core[Hot Plasma Core: Te/Ti ~15 keV]
-        Core --> FusionReaction[D-T Fusion Reactions: P_fusion = 255 MW]
-        Core --> AlphaHeating[Alpha Particle Self-Heating 3.5 MeV]
-        Core --> NeutronRelease[14.1 MeV Fast Neutrons 80%]
+    subgraph S2 ["Subsystem 2: Plasma Core & Confinement"]
+        BField --> Core["Hot Plasma Core: Te/Ti ~15 keV"]
+        Core --> FusionReaction["D-T Fusion Reactions: P_fusion = 255 MW"]
+        Core --> AlphaHeating["Alpha Particle Self-Heating 3.5 MeV"]
+        Core --> NeutronRelease["14.1 MeV Fast Neutrons 80%"]
     end
 
-    subgraph S3 [Subsystem 3: Island Divertor & Heat Exhaust]
-        Core -->|Scrape-off Layer SOL| Divertor[Tungsten Target Plates]
-        Puff[Argon/Neon Impurity Gas Seeding] -->|Radiative Detachment| Divertor
-        Divertor -->|Heat Flux < 10 MW/m2| ThermalExhaust[P_SOL Heat Removal]
+    subgraph S3 ["Subsystem 3: Island Divertor & Heat Exhaust"]
+        Core -->|Scrape-off Layer SOL| Divertor["Tungsten Target Plates"]
+        Puff["Argon/Neon Impurity Gas Seeding"] -->|Radiative Detachment| Divertor
+        Divertor -->|Heat Flux Under 10 MW/m2| ThermalExhaust["P_SOL Heat Removal"]
     end
 
-    subgraph S4 [Subsystem 4: Breeding Blanket & Tritium Fuel Cycle]
-        NeutronRelease --> Blanket[Liquid PbLi Eutectic Blanket 500°C]
-        Blanket -->|TBR > 1.05 Target| TritiumExtract[Tritium Fuel Breeding 142 g/day]
-        Blanket --> HeatExchanger[Primary Heat Exchanger Loop]
+    subgraph S4 ["Subsystem 4: Breeding Blanket & Tritium Fuel Cycle"]
+        NeutronRelease --> Blanket["Liquid PbLi Eutectic Blanket 500°C"]
+        Blanket -->|TBR > 1.05 Target| TritiumExtract["Tritium Fuel Breeding 142 g/day"]
+        Blanket --> HeatExchanger["Primary Heat Exchanger Loop"]
     end
 
-    subgraph S5 [Subsystem 5: Balance of Plant BoP & Electrical Conversion]
-        HeatExchanger --> Turbine[Supercritical Steam Turbine eta_th ~ 38%]
-        Turbine --> GrossPower[Gross Electricity P_gross ~ 106.4 MW]
-        GrossPower --> RecircLoop[Aux Recirculation: RF Heating + Cryo Pumps]
-        GrossPower --> NetGrid[Net Electricity Export to Grid P_net > +56 MW]
+    subgraph S5 ["Subsystem 5: Balance of Plant BoP & Electrical Conversion"]
+        HeatExchanger --> Turbine["Supercritical Steam Turbine eta_th ~ 38%"]
+        Turbine --> GrossPower["Gross Electricity P_gross ~ 106.4 MW"]
+        GrossPower --> RecircLoop["Aux Recirculation: RF Heating + Cryo Pumps"]
+        GrossPower --> NetGrid["Net Electricity Export to Grid P_net > +56 MW"]
     end
 ```
 
@@ -178,18 +178,18 @@ Our synthetic data generator and digital twin simulate both normal operation and
 ```mermaid
 stateDiagram-v2
     [*] --> StartupRamp : Initiate Field Energization
-    StartupRamp --> SteadyStateNominal : Coils at 5.5T & ECRH Ignition
+    StartupRamp --> SteadyStateNominal : Coils at 5.5T and ECRH Ignition
     
     state SteadyStateNominal {
         [*] --> FlattopBurn
-        FlattopBurn : Q_sci = 10.2 | P_net = +56.2 MW
-        FlattopBurn : Coils at 20K | Divertor Detached (4.2 MW/m2)
+        FlattopBurn : Q_sci = 10.2, P_net = +56.2 MW
+        FlattopBurn : Coils at 20K, Divertor Detached (4.2 MW/m2)
     }
 
     SteadyStateNominal --> PelletRefuelingBurst : Cryogenic D-T Pellet Injected
     state PelletRefuelingBurst {
         [*] --> DensitySurge
-        DensitySurge : Density = 3.2e20 m-3 | Q_sci = 16.5
+        DensitySurge : Density = 3.2e20 m-3, Q_sci = 16.5
         DensitySurge : Alpha Burst P_fusion = 412 MW
     }
     PelletRefuelingBurst --> SteadyStateNominal : Pellet Dissolves & Stabilizes
@@ -206,14 +206,14 @@ stateDiagram-v2
     state ImpurityAccumulation {
         [*] --> RadiativeCollapse
         RadiativeCollapse : Core Temp Drops to 3.8 keV
-        RadiativeCollapse : Q_sci = 1.8 | Grid Deficit -15 MW
+        RadiativeCollapse : Q_sci = 1.8, Grid Deficit -15 MW
     }
 
     SteadyStateNominal --> HTSCoilHotspotQuench : Cryo Cooling Interrupted in Coil 3
     state HTSCoilHotspotQuench {
         [*] --> ThermalRunaway
-        ThermalRunaway : Hotspot > 90K | FOAS Acoustic Burst > 25kHz
-        ThermalRunaway : Level 1 Edge Interlock Trips (< 50 us)
+        ThermalRunaway : Hotspot > 90K, FOAS Acoustic Burst > 25kHz
+        ThermalRunaway : Level 1 Edge Interlock Trips (under 50 us)
     }
     HTSCoilHotspotQuench --> [*] : Emergency Fast Discharge Dump Breaker
 ```
@@ -246,7 +246,7 @@ sequenceDiagram
     Note over Spot: Temperature exceeds ~90K (Superconductivity lost!)
     Spot->>Spot: Resistance Appears! Intense Joule Heating (I^2 * R)
     Spot->>Coil: Thermal Runaway Spreads (Normal Zone Propagation)
-    Dump-->>Coil: < 50 Microseconds: TRIGGER EMERGENCY QUENCH DUMP!
+    Dump-->>Coil: Under 50 Microseconds: TRIGGER EMERGENCY QUENCH DUMP!
     Note over Coil: Fast Discharge Breaker Dumps Energy Safely
 ```
 
@@ -265,15 +265,15 @@ Because a quench starts in microseconds, we use two advanced complementary senso
 
 ```mermaid
 flowchart LR
-    subgraph Sensors [Level 0 Hardware Sensors]
-        A[Fiber-Optic Cable FOAS] -->|Acoustic Emission Burst >25kHz| C[Multi-Sensor Fusion Engine]
-        B[Stray Capacitance Tile] -->|Capacitance Shift dC/dt| C
+    subgraph Sensors ["Level 0 Hardware Sensors"]
+        A["Fiber-Optic Cable FOAS"] -->|Acoustic Emission Burst >25kHz| C["Multi-Sensor Fusion Engine"]
+        B["Stray Capacitance Tile"] -->|Capacitance Shift dC/dt| C
     end
     
-    subgraph EdgeDecision [Level 1 MTCA.4 Edge Node - Rust]
-        C --> D{Anomaly Threshold Breached?}
-        D -->|Yes - Latency <50µs| E[EMERGENCY_QUENCH_DUMP Actuation]
-        D -->|No| F[Forward Telemetry to Level 3 Hub]
+    subgraph EdgeDecision ["Level 1 MTCA.4 Edge Node - Rust"]
+        C --> D{"Anomaly Threshold Breached?"}
+        D -->|Yes - Latency Under 50us| E["EMERGENCY_QUENCH_DUMP Actuation"]
+        D -->|No| F["Forward Telemetry to Level 3 Hub"]
     end
 ```
 
@@ -340,17 +340,25 @@ To compute complex 3D magnetic equilibrium equations (V3FIT physics code) in rea
 
 ```mermaid
 graph LR
-    Telemetry[Raw Telemetry Input: Temp, FOAS Freq, NZPV] --> PINN[PyTorch PINN Neural Network]
+    Telemetry["Raw Telemetry Input: Temp, FOAS Freq, NZPV"] --> PINN["PyTorch PINN Neural Network"]
     
-    subgraph LossFunc [Physics-Informed Loss Constraints]
-        PINN --> GS[Grad-Shafranov MHD Equilibrium Equation]
-        PINN --> Heat[Thermal Energy Balance Equation]
+    subgraph LossFunc ["Physics-Informed Loss Constraints"]
+        PINN --> GS["Grad-Shafranov MHD Equilibrium Equation"]
+        PINN --> Heat["Thermal Energy Balance Equation"]
     end
     
-    PINN --> Output[3D Magnetic Flux Mesh R, Z, Phi + Toroidal Beta + Coil Strain]
+    PINN --> Output["3D Magnetic Flux Mesh R, Z, Phi + Toroidal Beta + Coil Strain"]
 ```
 
-Unlike black-box AI models, a **PINN** has laws of physics (magnetohydrodynamics and energy conservation) baked directly into its neural loss function. This ensures its 3D predictions obey real physical laws!
+Unlike black-box AI models, a **PINN** has laws of physics (magnetohydrodynamics and energy conservation) baked directly into its neural loss function. This ensures its 3D predictions obey real physical laws:
+
+1. **Grad-Shafranov 2D/3D MHD Equilibrium**:
+   $$\Delta^* \psi = -\mu_0 R^2 \frac{dp}{d\psi} - F \frac{dF}{d\psi}$$
+   Where $\psi$ is the poloidal magnetic flux, $p(\psi)$ is plasma kinetic pressure, and $F(\psi) = R B_\phi$.
+
+2. **Total Multi-Physics Loss Function**:
+   $$\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{sensor\_data}} + \lambda_{\text{MHD}} \mathcal{L}_{\text{equilibrium}} + \lambda_{\text{thermal}} \mathcal{L}_{\text{energy}}$$
+   Where $\lambda_{\text{MHD}}$ and $\lambda_{\text{thermal}}$ are adaptive Lagrange multipliers enforcing physical constraints!
 
 ---
 

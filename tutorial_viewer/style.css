@@ -528,56 +528,325 @@ input[type="range"]::-webkit-slider-thumb {
     line-height: 1.5;
 }
 
-/* Markdown Container */
-.markdown-container {
-    max-width: 1000px;
-    margin: 0 auto;
-    line-height: 1.7;
+/* ========================================================================== */
+/* Tutorial White Document Styles (LaTeX & Mermaid Supported)                */
+/* ========================================================================== */
+#guide-doc {
+    background: #FFFFFF !important;
+    border-radius: 20px;
+    padding: 44px 48px;
+    margin-bottom: 40px;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
+    color: #1E293B !important;
 }
 
-.markdown-container h1, .markdown-container h2, .markdown-container h3 {
+@media (max-width: 768px) {
+    #guide-doc {
+        padding: 24px 16px;
+    }
+}
+
+.tutorial-section-header {
+    border-bottom: 2px solid #E2E8F0;
+    padding-bottom: 20px;
+    margin-bottom: 32px;
+}
+
+.tutorial-section-header h2 {
+    color: #0F172A !important;
+    font-size: 28px;
+    font-weight: 800;
     font-family: var(--font-heading);
-    margin-top: 28px;
+    margin-bottom: 8px;
+}
+
+.tutorial-section-header p {
+    color: #475569 !important;
+    font-size: 15.5px;
+    line-height: 1.6;
+}
+
+.tutorial-white-container {
+    background: #FFFFFF !important;
+    color: #1E293B !important;
+    max-width: 100%;
+    margin: 0 auto;
+    line-height: 1.8;
+    font-size: 16px;
+    font-family: var(--font-main);
+}
+
+.tutorial-white-container .loading-spinner {
+    color: #0284C7;
+    font-weight: 600;
+    text-align: center;
+    padding: 48px 0;
+    font-size: 16px;
+}
+
+/* Headings in White Tutorial Document */
+.tutorial-white-container h1 {
+    font-family: var(--font-heading);
+    color: #0F172A !important;
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #E2E8F0;
+    line-height: 1.25;
+}
+
+.tutorial-white-container h2 {
+    font-family: var(--font-heading);
+    color: #0369A1 !important; /* Deep sapphire cyan */
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-top: 40px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.tutorial-white-container h3 {
+    font-family: var(--font-heading);
+    color: #0F172A !important;
+    font-size: 1.28rem;
+    font-weight: 700;
+    margin-top: 30px;
     margin-bottom: 14px;
-    color: #FFFFFF;
 }
 
-.markdown-container h2 {
-    color: var(--accent-cyan);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 8px;
+.tutorial-white-container h4 {
+    color: #1E293B !important;
+    font-size: 1.12rem;
+    font-weight: 600;
+    margin-top: 22px;
+    margin-bottom: 10px;
 }
 
-.markdown-container p {
-    margin-bottom: 16px;
-    color: #CBD5E1;
+/* Paragraphs & Text Elements */
+.tutorial-white-container p {
+    color: #334155 !important;
+    margin-bottom: 18px;
+    line-height: 1.8;
 }
 
-.markdown-container ul, .markdown-container ol {
-    margin-left: 24px;
-    margin-bottom: 16px;
-    color: #CBD5E1;
+.tutorial-white-container strong {
+    color: #0F172A !important;
+    font-weight: 700;
 }
 
-.markdown-container code {
-    font-family: var(--font-mono);
-    background: rgba(0, 0, 0, 0.5);
-    color: var(--accent-cyan);
-    padding: 2px 6px;
-    border-radius: 4px;
+.tutorial-white-container em {
+    color: #475569 !important;
 }
 
-.markdown-container blockquote {
-    border-left: 4px solid var(--accent-cyan);
-    background: rgba(0, 242, 254, 0.05);
-    padding: 12px 18px;
-    margin-bottom: 16px;
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-}
-
-.markdown-container a {
-    color: var(--accent-cyan);
+.tutorial-white-container a {
+    color: #0284C7 !important;
     text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.tutorial-white-container a:hover {
+    color: #0369A1 !important;
+}
+
+.tutorial-white-container ul,
+.tutorial-white-container ol {
+    margin-left: 28px;
+    margin-bottom: 22px;
+    color: #334155 !important;
+}
+
+.tutorial-white-container li {
+    margin-bottom: 9px;
+    line-height: 1.75;
+}
+
+.tutorial-white-container hr {
+    border: none;
+    border-top: 1px solid #E2E8F0;
+    margin: 36px 0;
+}
+
+/* Callout & Blockquotes */
+.tutorial-white-container blockquote {
+    border-left: 4px solid #0284C7;
+    background: #F0F9FF !important;
+    color: #0F172A !important;
+    padding: 16px 24px;
+    margin: 24px 0;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.tutorial-white-container blockquote p {
+    color: #0F172A !important;
+    margin-bottom: 0;
+}
+
+/* Publication Tables */
+.tutorial-white-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 26px 0;
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.tutorial-white-container th {
+    background: #F1F5F9 !important;
+    color: #0F172A !important;
+    font-weight: 700;
+    padding: 13px 18px;
+    border: 1px solid #CBD5E1;
+    border-bottom: 2px solid #CBD5E1;
+    text-align: left;
+    font-size: 14.5px;
+}
+
+.tutorial-white-container td {
+    padding: 13px 18px;
+    border: 1px solid #E2E8F0;
+    color: #334155 !important;
+    font-size: 14.5px;
+    line-height: 1.6;
+}
+
+.tutorial-white-container tr:nth-child(even) td {
+    background: #F8FAFC !important;
+}
+
+.tutorial-white-container tr:hover td {
+    background: #F1F5F9 !important;
+}
+
+/* Code and Pre Blocks */
+.tutorial-white-container code {
+    font-family: var(--font-mono);
+    background: #F1F5F9 !important;
+    color: #0F172A !important;
+    border: 1px solid #E2E8F0;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 0.88em;
+}
+
+.tutorial-white-container pre {
+    background: #0F172A !important;
+    color: #F8FAFC !important;
+    padding: 22px;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 24px 0;
+    border: 1px solid #1E293B;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.tutorial-white-container pre code {
+    background: transparent !important;
+    color: #F8FAFC !important;
+    border: none;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+/* ========================================================================== */
+/* LaTeX Math Typesetting (KaTeX) Styles                                      */
+/* ========================================================================== */
+.tutorial-white-container .math-display-block {
+    margin: 24px 0;
+    padding: 20px 24px;
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    overflow-x: auto;
+    text-align: center;
+    color: #0F172A !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.tutorial-white-container .math-inline {
+    padding: 0 3px;
+    color: #0F172A !important;
+    font-size: 1.05em;
+}
+
+.tutorial-white-container .katex {
+    color: #0F172A !important;
+    font-size: 1.1em;
+}
+
+.tutorial-white-container .katex-display {
+    margin: 0.5em 0;
+}
+
+.tutorial-white-container .katex .base {
+    color: #0F172A !important;
+}
+
+/* ========================================================================== */
+/* Mermaid Diagrams on White Background                                      */
+/* ========================================================================== */
+.tutorial-white-container .mermaid-container {
+    margin: 32px 0;
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 28px 24px;
+    overflow-x: auto;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.tutorial-white-container .mermaid {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    font-family: var(--font-main);
+    display: flex;
+    justify-content: center;
+}
+
+.tutorial-white-container .mermaid svg {
+    max-width: 100%;
+    height: auto;
+    background: #FFFFFF !important;
+}
+
+/* Overrides for crisp Mermaid rendering on White */
+.tutorial-white-container .mermaid text {
+    fill: #0F172A !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500;
+}
+
+.tutorial-white-container .mermaid .node rect,
+.tutorial-white-container .mermaid .node circle,
+.tutorial-white-container .mermaid .node polygon {
+    fill: #F0F9FF !important;
+    stroke: #0284C7 !important;
+    stroke-width: 1.5px !important;
+}
+
+.tutorial-white-container .mermaid .edgePath .path {
+    stroke: #0284C7 !important;
+    stroke-width: 2px !important;
+}
+
+.tutorial-white-container .mermaid .marker {
+    fill: #0284C7 !important;
+    stroke: #0284C7 !important;
+}
+
+.tutorial-white-container .mermaid .cluster rect {
+    fill: #F8FAFC !important;
+    stroke: #CBD5E1 !important;
+    stroke-width: 1.5px !important;
 }
 
 /* Footer */
