@@ -1852,128 +1852,65 @@ function initPurdueInspector() {
 }
 
 /* ========================================================================== */
-/* 7. Markdown Tutorial, KaTeX Mathematics & Mermaid Diagrams                */
+/* 7. Tutorial Viewer Initialization: KaTeX Math & Mermaid Diagrams          */
 /* ========================================================================== */
 function initMarkdownTutorial() {
-    const viewer = document.getElementById('markdown-viewer');
-    if (!viewer) return;
+    renderMermaidDiagrams();
+    renderMathFormulas();
+}
 
-    const candidatePaths = ['TUTORIAL.md', '/TUTORIAL.md', '/tutorial/TUTORIAL.md'];
+function renderMathFormulas() {
+    if (!window.katex) return;
 
-    async function loadTutorial() {
-        for (const p of candidatePaths) {
-            try {
-                const res = await fetch(p);
-                if (res.ok) {
-                    const md = await res.text();
-                    viewer.innerHTML = renderMarkdownWithMathAndMermaid(md);
-                    renderMermaidDiagrams();
-                    return;
-                }
-            } catch (e) {}
+    // Render display math cards
+    document.querySelectorAll('.math-card').forEach(el => {
+        const raw = el.textContent.trim();
+        const formula = raw.replace(/^\$\$/g, '').replace(/\$\$$/g, '').trim();
+        try {
+            katex.render(formula, el, {
+                displayMode: true,
+                throwOnError: false
+            });
+        } catch (e) {
+            console.warn("KaTeX display render notice:", e);
         }
-        throw new Error('Could not fetch TUTORIAL.md from candidate paths');
+    });
+
+    // Render inline math
+    const walker = document.createTreeWalker(
+        document.getElementById('markdown-viewer') || document.body,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+    );
+
+    const nodesToReplace = [];
+    let node;
+    while ((node = walker.nextNode())) {
+        if (node.nodeValue && node.nodeValue.includes('$')) {
+            if (!node.parentElement.closest('.math-card') && 
+                !node.parentElement.closest('.mermaid') && 
+                !node.parentElement.closest('pre') && 
+                !node.parentElement.closest('code')) {
+                nodesToReplace.push(node);
+            }
+        }
     }
 
-    loadTutorial().catch(err => {
-        console.error('Error fetching TUTORIAL.md:', err);
-        viewer.innerHTML = `
-            <h2>📖 Beginner's Tutorial Loaded</h2>
-            <p>Please open <a href="/TUTORIAL.md" target="_blank">TUTORIAL.md</a> to view the complete guide.</p>
-        `;
-    });
-}
+    nodesToReplace.forEach(textNode => {
+        const text = textNode.nodeValue;
+        if (!/\$([^\$\n]+?)\$/.test(text)) return;
 
-function renderMarkdownWithMathAndMermaid(rawText) {
-    let text = rawText;
-    const mathBlocks = [];
-    const inlineMath = [];
-    const mermaidBlocks = [];
-
-    // Extract Math Blocks $$...$$
-    text = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, equation) => {
-        const id = `MATHBLOCK_${mathBlocks.length}`;
-        mathBlocks.push(equation.trim());
-        return id;
-    });
-
-    // Extract Inline Math $...$
-    text = text.replace(/\$([^\$\n]+?)\$/g, (match, equation) => {
-        const id = `INLINEMATH_${inlineMath.length}`;
-        inlineMath.push(equation.trim());
-        return id;
-    });
-
-    // Extract Mermaid Blocks
-    text = text.replace(/```mermaid([\s\S]*?)```/g, (match, code) => {
-        const id = `MERMAID_${mermaidBlocks.length}`;
-        mermaidBlocks.push(code.trim());
-        return id;
-    });
-
-    // Convert markdown
-    let html = '';
-    if (window.marked) {
-        marked.setOptions({ gfm: true, breaks: true });
-        html = marked.parse(text);
-    } else {
-        html = fallbackMarkdownParser(text);
-    }
-
-    // Re-insert math blocks rendered with KaTeX
-    html = html.replace(/MATHBLOCK_(\d+)/g, (match, idx) => {
-        const id = parseInt(idx, 10);
-        const eq = mathBlocks[id] || '';
-        try {
-            if (window.katex) {
-                return `<div class="katex-display">${katex.renderToString(eq, { displayMode: true, throwOnError: false })}</div>`;
+        const span = document.createElement('span');
+        span.innerHTML = text.replace(/\$([^\$\n]+?)\$/g, (match, formula) => {
+            try {
+                return katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false });
+            } catch (err) {
+                return match;
             }
-        } catch (e) {}
-        return `$$\n${eq}\n$$`;
+        });
+        textNode.parentNode.replaceChild(span, textNode);
     });
-
-    // Re-insert inline math
-    html = html.replace(/INLINEMATH_(\d+)/g, (match, idx) => {
-        const id = parseInt(idx, 10);
-        const eq = inlineMath[id] || '';
-        try {
-            if (window.katex) {
-                return katex.renderToString(eq, { displayMode: false, throwOnError: false });
-            }
-        } catch (e) {}
-        return `$${eq}$`;
-    });
-
-    // Re-insert Mermaid diagrams
-    html = html.replace(/MERMAID_(\d+)/g, (match, idx) => {
-        const id = parseInt(idx, 10);
-        const code = mermaidBlocks[id] || '';
-        return `<div class="mermaid-container"><pre class="mermaid">${escapeHtml(code)}</pre></div>`;
-    });
-
-    return html;
-}
-
-function escapeHtml(text) {
-    return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-function fallbackMarkdownParser(md) {
-    return md
-        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-        .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
-        .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-        .replace(/`([^`]+)`/gim, '<code>$1</code>')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank">$1</a>')
-        .replace(/\n\n/gim, '<br><br>');
 }
 
 async function renderMermaidDiagrams() {
@@ -1986,7 +1923,7 @@ async function renderMermaidDiagrams() {
             securityLevel: 'loose',
             themeVariables: {
                 fontFamily: "'Inter', sans-serif",
-                fontSize: '14px',
+                fontSize: '13px',
                 primaryColor: '#F0F9FF',
                 primaryBorderColor: '#0284C7',
                 primaryTextColor: '#0F172A',
@@ -2001,13 +1938,18 @@ async function renderMermaidDiagrams() {
         });
 
         const elements = document.querySelectorAll('.mermaid:not([data-processed="true"])');
-        if (elements.length > 0) {
-            if (typeof mermaid.run === 'function') {
-                await mermaid.run({ nodes: Array.from(elements) });
-                elements.forEach(el => el.setAttribute('data-processed', 'true'));
-            } else if (typeof mermaid.init === 'function') {
-                mermaid.init(undefined, elements);
-                elements.forEach(el => el.setAttribute('data-processed', 'true'));
+        for (const el of elements) {
+            try {
+                if (typeof mermaid.run === 'function') {
+                    await mermaid.run({ nodes: [el] });
+                    el.setAttribute('data-processed', 'true');
+                } else if (typeof mermaid.init === 'function') {
+                    mermaid.init(undefined, el);
+                    el.setAttribute('data-processed', 'true');
+                }
+            } catch (diagErr) {
+                console.warn("Mermaid diagram render notice:", diagErr);
+                el.setAttribute('data-processed', 'true');
             }
         }
     } catch (err) {

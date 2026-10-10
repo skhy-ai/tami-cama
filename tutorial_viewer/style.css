@@ -546,8 +546,16 @@ input[type="range"]::-webkit-slider-thumb {
     }
 }
 
+#guide-doc {
+    background: #FFFFFF !important;
+    border-radius: var(--radius-lg);
+    padding: 36px 44px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid #E2E8F0;
+}
+
 .tutorial-section-header {
-    border-bottom: 2px solid #E2E8F0;
+    border-bottom: 2px solid #F1F5F9;
     padding-bottom: 20px;
     margin-bottom: 32px;
 }
@@ -568,20 +576,12 @@ input[type="range"]::-webkit-slider-thumb {
 
 .tutorial-white-container {
     background: #FFFFFF !important;
-    color: #1E293B !important;
+    color: #334155 !important;
     max-width: 100%;
     margin: 0 auto;
-    line-height: 1.8;
+    line-height: 1.85;
     font-size: 16px;
     font-family: var(--font-main);
-}
-
-.tutorial-white-container .loading-spinner {
-    color: #0284C7;
-    font-weight: 600;
-    text-align: center;
-    padding: 48px 0;
-    font-size: 16px;
 }
 
 /* Headings in White Tutorial Document */
@@ -1707,6 +1707,162 @@ input[type="range"]::-webkit-slider-thumb {
     .studio-top-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* ========================================================================== */
+/* Pre-rendered Soft-Toned White Tutorial Enhancements                        */
+/* ========================================================================== */
+.tutorial-intro-lead {
+    font-size: 1.15rem;
+    color: #475569 !important;
+    line-height: 1.7;
+    margin-bottom: 16px;
+}
+
+.tutorial-meta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+    margin-bottom: 24px;
+}
+
+.tutorial-meta-bar span {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0369A1;
+    background: #F0F9FF;
+    border: 1px solid #BAE6FD;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.tutorial-toc-box {
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 24px 30px;
+    margin: 28px 0;
+}
+
+.tutorial-toc-box h3 {
+    margin-top: 0 !important;
+    margin-bottom: 16px !important;
+    color: #0F172A !important;
+    font-size: 1.15rem;
+}
+
+.toc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .toc-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.toc-col {
+    margin: 0 !important;
+    padding-left: 20px !important;
+}
+
+.toc-col li {
+    margin-bottom: 8px;
+}
+
+.toc-col a {
+    color: #0284C7 !important;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+
+.toc-col a:hover {
+    color: #0369A1 !important;
+    text-decoration: underline;
+}
+
+.math-card {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 18px 0;
+    text-align: center;
+    color: #0F172A;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    overflow-x: auto;
+}
+
+.glossary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.glossary-item {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 16px 18px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.glossary-item:hover {
+    transform: translateY(-2px);
+    border-color: #0284C7;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
+}
+
+.glossary-item h4 {
+    margin-top: 0 !important;
+    margin-bottom: 6px !important;
+    color: #0369A1 !important;
+    font-size: 1rem;
+}
+
+.glossary-item p {
+    margin-bottom: 0 !important;
+    font-size: 13.5px;
+    color: #475569 !important;
+    line-height: 1.6;
+}
+
+.code-box {
+    background: #0F172A;
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin: 16px 0;
+    overflow-x: auto;
+}
+
+.code-box pre {
+    margin: 0;
+}
+
+.code-box code {
+    color: #38BDF8;
+    font-family: var(--font-mono);
+    font-size: 14px;
+}
+
+.tut-footer-note {
+    background: #F0F9FF;
+    border-left: 4px solid #0284C7;
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+    margin-top: 32px;
+}
+
+.tut-footer-note p {
+    margin-bottom: 0 !important;
+    font-size: 13.5px;
+    color: #0C4A6E !important;
 }
 
 

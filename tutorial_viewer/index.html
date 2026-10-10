@@ -92,7 +92,573 @@
             </div>
 
             <div class="tutorial-white-container" id="markdown-viewer">
-                <div class="loading-spinner">Loading tutorial content, typesetting LaTeX math, and rendering Mermaid diagrams...</div>
+                
+                <div class="tutorial-doc-header">
+                    <h1>🌟 Welcome to the World of Nuclear Fusion</h1>
+                    <p class="tutorial-intro-lead">
+                        A beginner-friendly guide to stars on Earth, the three major reactor architectures (Stellarators, Tokamaks, and Inertial Confinement Fusion), and how modern software safeguards these cosmic machines.
+                    </p>
+                    <div class="tutorial-meta-bar">
+                        <span>📖 Comprehensive Engineering Guide</span>
+                        <span>⏱️ ~15 min read</span>
+                        <span>⚡ SKHY Systems Architecture Team</span>
+                        <span>📚 References: Fusion Energy Base</span>
+                    </div>
+                </div>
+
+                <div class="tutorial-toc-box">
+                    <h3>📚 Table of Contents</h3>
+                    <div class="toc-grid">
+                        <ul class="toc-col">
+                            <li><a href="#tut-fusion-basics">1. What is Nuclear Fusion?</a></li>
+                            <li><a href="#tut-three-paths">2. Three Paths: Stellarators, Tokamaks & ICF</a></li>
+                            <li><a href="#tut-lawson">3. Lawson Criteria & Scientific Gain ($Q$)</a></li>
+                            <li><a href="#tut-power-balance">4. Power Plant Balance & 2D Sankey Simulator</a></li>
+                            <li><a href="#tut-paper-presets">5. Published Research Paper Benchmarks</a></li>
+                            <li><a href="#tut-studio-guide">6. Exploring the TAMI Interactive Studio</a></li>
+                        </ul>
+                        <ul class="toc-col">
+                            <li><a href="#tut-glossary">7. Friendly Glossary of Fusion Terms</a></li>
+                            <li><a href="#tut-failure-modes">8. The 18 Failure Modes & Protections</a></li>
+                            <li><a href="#tut-hts-coils">9. Superconductors & REBCO Tape Coils</a></li>
+                            <li><a href="#tut-quench-foas">10. Magnet Quench & FOAS Acoustic Detection</a></li>
+                            <li><a href="#tut-purdue">11. Purdue 6-Tier Software Architecture</a></li>
+                            <li><a href="#tut-quickstart">12. Hands-On: Running the Codebase</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- SECTION 1 -->
+                <section id="tut-fusion-basics" class="tut-section">
+                    <h2>1. What is Nuclear Fusion?</h2>
+                    <p>
+                        Every second, our Sun converts 600 million tons of hydrogen into helium, showering our solar system with warmth and light. Nuclear fusion is this very process: taking two light atomic nuclei and fusing them together to form a heavier nucleus, releasing tremendous amounts of energy in accordance with Einstein's famous equation:
+                    </p>
+                    <div class="math-card">
+                        $$E = \Delta m \cdot c^2$$
+                    </div>
+                    <p>
+                        On Earth, the most promising fuel combination is <strong>Deuterium ($^2	ext{H}$)</strong> and <strong>Tritium ($^3	ext{H}$)</strong>, two isotopes of hydrogen:
+                    </p>
+                    <div class="math-card">
+                        $$	ext{Deuterium } (^2	ext{H}) + 	ext{Tritium } (^3	ext{H}) \longrightarrow 	ext{Helium-4 } (^4	ext{He}, 3.52	ext{ MeV}) + 	ext{Neutron } (	ext{n}, 14.06	ext{ MeV})$$
+                    </div>
+                    <p>
+                        Deuterium is abundant in seawater (one in every 6,500 hydrogen atoms in Earth's oceans is deuterium). Tritium can be bred directly inside the reactor using lithium blankets. Just one bathtub of water and the lithium from a laptop battery contains enough fusion fuel to power an average household for decades—with <strong>zero greenhouse gas emissions</strong> and <strong>no long-lived radioactive waste</strong>.
+                    </p>
+                    <blockquote>
+                        💡 <strong>The Grand Challenge:</strong> Both hydrogen nuclei are positively charged, so they strongly repel each other like two identical magnets pushed together. To bring them close enough for the Strong Nuclear Force to bind them, we must heat the fuel to over <strong>150 Million &deg;C</strong>—ten times hotter than the core of the Sun! At these temperatures, matter becomes an electrically charged gas called <strong>Plasma</strong>.
+                    </blockquote>
+                </section>
+
+                <hr>
+
+                <!-- SECTION 2 -->
+                <section id="tut-three-paths" class="tut-section">
+                    <h2>2. Three Paths: Stellarators, Tokamaks & Laser ICF</h2>
+                    <p>
+                        Because no solid material can touch a 150 Million &deg;C plasma without vaporizing, scientists and engineers have created three distinct architectures to contain and ignite the reaction:
+                    </p>
+
+                    <div class="mermaid">
+graph TD
+    A["Approaches to Nuclear Fusion"] --> B["Magnetic Confinement (MCF)"]
+    A --> C["Inertial Confinement (ICF)"]
+    B --> B1["Quasi-Isodynamic Stellarator"]
+    B --> B2["Advanced Tokamak"]
+    B1 --> S1["3D Non-Planar HTS Coils"]
+    B1 --> S2["Zero Net Current: Disruption-Free"]
+    B2 --> T1["Central Solenoid Transformer"]
+    B2 --> T2["15 MA Plasma Current: High Beta"]
+    C --> I1["Pulsed UV Lasers (2.15 MJ @ 5 Hz)"]
+    C --> I2["1000x Solid Density Microimplosions"]
+                    </div>
+
+                    <h3>2.1 Quasi-Isodynamic (QI) Modular Stellarators</h3>
+                    <p>
+                        In a stellarator (championed by <strong>SKHY</strong>), the twisting magnetic cage is created <em>entirely by external, carefully shaped 3D coils</em>. 
+                    </p>
+                    <ul>
+                        <li><strong>No Driven Plasma Current:</strong> Because the magnetic twist is baked into the coil shapes, the stellarator does not need to drive a multi-megampere electric current through the plasma.</li>
+                        <li><strong>Disruption-Free:</strong> Without a massive internal current, current-driven disruptions and violent vertical collapses are physically impossible. The plasma can run continuously in steady-state for weeks or months at a time.</li>
+                        <li><strong>Island Divertor:</strong> The 3D magnetic geometry naturally routes exhaust heat along magnetic islands to water-cooled target plates, keeping heat loads gentle and detached.</li>
+                    </ul>
+
+                    <h3>2.2 Advanced Tokamaks</h3>
+                    <p>
+                        A tokamak uses simpler, D-shaped coils to create a toroidal field, but achieves the necessary helical twist by driving a massive toroidal current ($I_p pprox 15	ext{ MA}$) directly through the plasma using a central transformer (the Central Solenoid).
+                    </p>
+                    <ul>
+                        <li><strong>High Performance:</strong> Tokamaks achieve excellent confinement in compact volumes and hold the historical records for fusion power output (such as JET's 16.1 MW record in 1997).</li>
+                        <li><strong>Disruption Sensitivity:</strong> If the internal current suddenly loses stability, the plasma can undergo a "Major Disruption"—collapsing in less than a millisecond, inducing hundreds of volts of loop voltage, and expelling high-energy electron beams.</li>
+                    </ul>
+
+                    <h3>2.3 Laser Inertial Confinement Fusion (ICF)</h3>
+                    <p>
+                        Instead of holding plasma with magnets for seconds, Inertial Confinement Fusion compresses a microscopic frozen fuel droplet (the size of a peppercorn) using intense, converging laser pulses.
+                    </p>
+                    <ul>
+                        <li><strong>Rocket Ablation:</strong> Laser beams vaporize the outer capsule shell, rocketing outward and driving the inner fuel inward at over $350	ext{ km/s}$.</li>
+                        <li><strong>Extreme Density:</strong> The fuel is compressed to over $1,000	imes$ solid density, igniting a central thermonuclear spark before inertia allows the fuel to fly apart.</li>
+                        <li><strong>Pulsed Operation:</strong> Power plants operate by firing at a repetition rate of $5	ext{ to }10	ext{ shots per second}$ (5–10 Hz).</li>
+                    </ul>
+
+                    <h3>Comparative Topology Summary</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>QI Modular Stellarator</th>
+                                    <th>Advanced Tokamak</th>
+                                    <th>Laser Inertial Confinement (ICF)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Confinement Method</strong></td>
+                                    <td>3D Non-Planar HTS Coils</td>
+                                    <td>Toroidal Coils + Plasma Current ($I_p$)</td>
+                                    <td>Ablative Laser Compression</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Operational Regime</strong></td>
+                                    <td>Continuous Steady-State ($10^6	ext{ s}$)</td>
+                                    <td>Pulsed Inductive ($10^3	ext{ s}$)</td>
+                                    <td>High-Repetition Pulsed ($5	ext{--}10	ext{ Hz}$)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Internal Current ($I_p$)</strong></td>
+                                    <td>Zero ($I_{	ext{net}} pprox 0	ext{ kA}$)</td>
+                                    <td>High ($15	ext{--}20	ext{ MA}$)</td>
+                                    <td>Zero</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Disruption Risk</strong></td>
+                                    <td><strong>None (Inherently Immune)</strong></td>
+                                    <td>High (Requires Active Mitigation)</td>
+                                    <td>None (Hydrodynamic Instabilities)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Typical Scientific Gain</strong></td>
+                                    <td>$Q_{	ext{sci}} pprox 10	ext{--}12$</td>
+                                    <td>$Q_{	ext{sci}} pprox 10	ext{--}15$</td>
+                                    <td>Target Gain $G pprox 80	ext{--}100$</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <hr>
+
+                <!-- SECTION 3 -->
+                <section id="tut-lawson" class="tut-section">
+                    <h2>3. Lawson Criteria & Scientific Gain ($Q$)</h2>
+                    <p>
+                        In 1955, British physicist J.D. Lawson published a simple yet profound realization: for fusion to release more energy than it takes to heat the fuel, the product of <strong>density ($n$)</strong>, <strong>temperature ($T$)</strong>, and <strong>energy confinement time ($	au_E$)</strong> must exceed a critical threshold.
+                    </p>
+                    <div class="math-card">
+                        $$n \cdot T \cdot 	au_E \ge 3 	imes 10^{21} 	ext{ keV}\cdot	ext{s}\cdot	ext{m}^{-3}$$
+                    </div>
+                    <p>
+                        This "Triple Product" demonstrates the beautiful duality of fusion:
+                    </p>
+                    <ul>
+                        <li><strong>Magnetic Confinement (Stellarators & Tokamaks):</strong> Uses moderate density ($n \sim 10^{20}	ext{ m}^{-3}$) and holds heat gently for several seconds ($	au_E \sim 2	ext{--}3	ext{ s}$).</li>
+                        <li><strong>Inertial Confinement (ICF):</strong> Uses ultra-high density ($n \sim 10^{26}	ext{ m}^{-3}$) for just a fraction of a billionth of a second ($	au_E \sim 0.1	ext{ ns}$).</li>
+                    </ul>
+
+                    <h3>Understanding Gain ($Q$)</h3>
+                    <ul>
+                        <li><strong>Scientific Gain ($Q_{	ext{sci}} = P_{	ext{fusion}} / P_{	ext{heating}}$):</strong> The ratio of fusion power generated to the heating power injected into the core.
+                            <ul>
+                                <li>$Q < 1.0$: Sub-breakeven. More heat is put in than fusion comes out.</li>
+                                <li>$Q = 1.0$: <strong>Scientific Breakeven</strong>. Fusion power equals injected power.</li>
+                                <li>$Q = 5.0$: <strong>Alpha Heating Dominance</strong>. The reaction produces enough helium nuclei to heat itself as much as external heaters do.</li>
+                                <li>$Q \ge 10.0$: <strong>Commercial Power Plant Regime</strong>. The reaction produces abundant surplus thermal power.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </section>
+
+                <hr>
+
+                <!-- SECTION 4 -->
+                <section id="tut-power-balance" class="tut-section">
+                    <h2>4. Power Plant Balance & 2D Sankey Simulator</h2>
+                    <p>
+                        A common misconception is that achieving $Q_{	ext{sci}} = 1.0$ produces electricity for the power grid. As shown by research from Sam Wurzel and the team at <a href="https://www.fusionenergybase.com/fusion-power-plant-simulator" target="_blank">Fusion Energy Base</a>, an actual power plant must account for conversion efficiencies and recirculating electricity:
+                    </p>
+
+                    <div class="mermaid">
+flowchart LR
+    P_driver["Driver Electricity"] --> System["Heating / Laser Driver (eta_driver)"]
+    System -->|Injected Power P_inj| Core["Fusion Plasma Core: Q_sci"]
+    Core -->|Fusion Yield P_fus| Blanket["Breeding Blanket (Multiplier M ~ 1.15)"]
+    Blanket -->|Total Thermal P_th| Turbine["Turbine Generator (eta_th ~ 38%)"]
+    Turbine -->|Gross Electricity P_gross| Split{"Power Split"}
+    Split -->|Recirculating Loop| Recirc["Recirculating Power P_recirc"]
+    Recirc --> P_driver
+    Split -->|Surplus P_net > 0| Grid["Clean Grid Electricity!"]
+                    </div>
+
+                    <h3>The Physics Equations Behind the 2D Sankey Canvas</h3>
+                    <ol>
+                        <li><strong>Total Thermal Energy:</strong> $P_{	ext{thermal}} = P_{	ext{fusion}} \cdot M + P_{	ext{injected}}$ (where $M pprox 1.15$ from exothermic neutron capture in lithium).</li>
+                        <li><strong>Gross Electric Generation:</strong> $P_{	ext{gross}} = P_{	ext{thermal}} \cdot \eta_{	ext{thermal}}$ (steam turbine or Brayton cycle, typically $35	ext{--}42\%$).</li>
+                        <li><strong>Recirculating Power:</strong> $P_{	ext{recirc}} = rac{P_{	ext{injected}}}{\eta_{	ext{driver}}} + P_{	ext{aux}}$ (wall-plug efficiency of heating/lasers and cryogenic coolers).</li>
+                        <li><strong>Net Grid Export:</strong> $P_{	ext{net}} = P_{	ext{gross}} - P_{	ext{recirc}}$. Only when $P_{	ext{net}} > 0$ does the plant generate clean electricity for homes and industry!</li>
+                        <li><strong>Engineering Gain:</strong> $Q_{	ext{eng}} = rac{P_{	ext{gross}}}{P_{	ext{recirc}}}$. Commercial plants target $Q_{	ext{eng}} \ge 2.5	ext{--}4.0$.</li>
+                    </ol>
+                </section>
+
+                <hr>
+
+                <!-- SECTION 5 -->
+                <section id="tut-paper-presets" class="tut-section">
+                    <h2>5. Published Research Paper Benchmarks</h2>
+                    <p>
+                        In the <strong>2D Energy Diagram</strong> tab, you can click any of the peer-reviewed benchmark presets to inspect how historical experiments and future commercial power plants compare:
+                    </p>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Preset</th>
+                                    <th>Concept</th>
+                                    <th>Citation</th>
+                                    <th>Input Power</th>
+                                    <th>Fusion Yield</th>
+                                    <th>Gain</th>
+                                    <th>Net Grid Export</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>SKHY Commercial Stellarator</strong></td>
+                                    <td>QI Modular HTS</td>
+                                    <td>SKHY Engineering Baseline (2026)</td>
+                                    <td>25.0 MW</td>
+                                    <td>262.5 MW</td>
+                                    <td>$Q = 10.5$</td>
+                                    <td><strong style="color: #059669;">+58.2 MW</strong> (Surplus)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>JET D-T Record (1997)</strong></td>
+                                    <td>Tokamak</td>
+                                    <td>Keilhacker et al., <em>Nucl. Fusion</em> 39, 209</td>
+                                    <td>24.0 MW</td>
+                                    <td>16.1 MW</td>
+                                    <td>$Q = 0.67$</td>
+                                    <td><span style="color: #DC2626;">-32.5 MW</span> (Consumer)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ITER Baseline Target</strong></td>
+                                    <td>Tokamak</td>
+                                    <td>ITER Physics Basis, <em>Nucl. Fusion</em> 39, 2137</td>
+                                    <td>50.0 MW</td>
+                                    <td>500.0 MW</td>
+                                    <td>$Q = 10.0$</td>
+                                    <td><strong style="color: #059669;">+125.0 MW</strong> (Design)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>SPARC High-Field (CFS)</strong></td>
+                                    <td>Compact Tokamak</td>
+                                    <td>Creely et al., <em>J. Plasma Phys.</em> 86 (2020)</td>
+                                    <td>12.5 MW</td>
+                                    <td>140.0 MW</td>
+                                    <td>$Q = 11.2$</td>
+                                    <td><strong style="color: #059669;">+38.5 MW</strong> (Surplus)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>NIF Laser Ignition (2022/23)</strong></td>
+                                    <td>Laser ICF</td>
+                                    <td>Abu-Shawareb et al., <em>PRL</em> 132, 065102</td>
+                                    <td>2.05 MJ</td>
+                                    <td>3.88 MJ</td>
+                                    <td>$G = 1.89$</td>
+                                    <td><span style="color: #DC2626;">-12.2 MW</span> (Single Shot)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>IFE Commercial Plant</strong></td>
+                                    <td>Laser ICF</td>
+                                    <td>Meier et al., <em>Laser & Part. Beams</em> 32, 281</td>
+                                    <td>2.15 MJ @ 5 Hz</td>
+                                    <td>182.8 MJ</td>
+                                    <td>$G = 85.0$</td>
+                                    <td><strong style="color: #059669;">+263.5 MW</strong> (Surplus)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Wendelstein 7-X Flattop</strong></td>
+                                    <td>QI Stellarator</td>
+                                    <td>Wolf et al., <em>Phys. Plasmas</em> 26, 082504</td>
+                                    <td>7.0 MW</td>
+                                    <td>Deuterium Test</td>
+                                    <td>$n	au T=6.5	imes 10^{19}$</td>
+                                    <td>Laboratory Benchmark</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <hr>
+
+                <!-- SECTION 6 -->
+                <section id="tut-studio-guide" class="tut-section">
+                    <h2>6. Exploring the TAMI Interactive Studio</h2>
+                    <p>
+                        The web viewer includes five integrated interactive panels:
+                    </p>
+                    <ol>
+                        <li><strong>📖 Beginner Guide & Physics:</strong> This comprehensive tutorial document with KaTeX equations and Mermaid diagrams.</li>
+                        <li><strong>🌐 3D Digital Twin Studio & Subsystems:</strong> 
+                            <ul>
+                                <li><strong>Three.js Viewport:</strong> Real-time WebGL models of non-planar modular HTS coils, Central Solenoid, D-shaped coils, laser beam cones, and fuel pellets with OrbitControls and camera presets.</li>
+                                <li><strong>Mode Selector Strip:</strong> Live switching between normal flattop and 18 distinct failure modes.</li>
+                                <li><strong>5 Subsystem Cards:</strong> Real-time telemetry across Coils & Cryo, Plasma Core, Divertor, Breeding Blanket, and Power Balance.</li>
+                            </ul>
+                        </li>
+                        <li><strong>⚛️ 2D Energy Diagram (Sankey):</strong> Dynamic power flow ribbons modeled after the Fusion Energy Base simulator with research presets and sliders.</li>
+                        <li><strong>⚡ Quench & FOAS Edge Simulator:</strong> Interactive REBCO temperature, acoustic frequency, and capacitance sliders testing microsecond MTCA.4 FPGA interlocks.</li>
+                        <li><strong>🏛 Purdue 6-Tier Architecture:</strong> Interactive ISA-95 model showing how Level 0 sensors, Level 1 Rust safety kernels, Level 3 middleware, and Level 5 AI interact.</li>
+                    </ol>
+                </section>
+
+                <hr>
+
+                <!-- SECTION 7 -->
+                <section id="tut-glossary" class="tut-section">
+                    <h2>7. Friendly Glossary of Fusion Terms</h2>
+                    <div class="glossary-grid">
+                        <div class="glossary-item">
+                            <h4>Scientific Gain ($Q_{	ext{sci}}$)</h4>
+                            <p>Fusion power out divided by heating power in ($P_{	ext{fus}} / P_{	ext{in}}$). When $Q > 1$, more fusion energy is released than entered the plasma.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Engineering Gain ($Q_{	ext{eng}}$)</h4>
+                            <p>Gross electricity generated by the turbines divided by all electricity consumed to run the plant ($P_{	ext{gross}} / P_{	ext{recirc}}$). Needs to be $\ge 2.5$ for commercial profitability.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Target Gain ($G$ in ICF)</h4>
+                            <p>Fusion energy generated per shot divided by the laser pulse energy striking the fuel capsule ($E_{	ext{fus}} / E_{	ext{laser}}$).</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Confinement Time ($	au_E$)</h4>
+                            <p>How long heat stays trapped in the plasma before leaking out. Like insulation in a winter jacket—higher is better!</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Safety Factor ($q_{95}$)</h4>
+                            <p>How many times magnetic field lines wind around the long way versus the short way. In tokamaks, $q_{95} \ge 3.0$ is required to avoid kink instabilities.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Greenwald Density Limit ($n_G$)</h4>
+                            <p>The maximum density a tokamak plasma can maintain before radiative cooling triggers an abrupt disruption.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Toroidal Beta ($eta$)</h4>
+                            <p>The ratio of plasma pressure to magnetic field pressure. Measures how efficiently the magnetic field contains the hot gas.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Magnetic Islands & NTMs</h4>
+                            <p>Torn and reconnected magnetic surfaces that resemble islands, flattening local temperature and degrading confinement.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Edge-Localized Modes (ELMs)</h4>
+                            <p>Periodic eruptions at the plasma edge that release intense heat pulses toward the divertor plates, similar to solar flares.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Vertical Displacement Event (VDE)</h4>
+                            <p>When an elongated tokamak plasma drifts vertically into the vacuum vessel wall within milliseconds.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Runaway Electrons</h4>
+                            <p>Electrons accelerated by electric fields during a disruption to near-light speed, forming a concentrated relativistic beam.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>REBCO Superconductor</h4>
+                            <p>Rare-Earth Barium Copper Oxide tape capable of carrying over 500 A of current with strictly zero resistance at 20 Kelvin.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Normal Zone Propagation Velocity (NZPV)</h4>
+                            <p>The speed at which a warm resistive zone spreads along a superconducting tape. In REBCO it is very slow (cm/s), causing heat to concentrate in a tiny spot.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>FOAS (Fiber-Optic Acoustic Sensing)</h4>
+                            <p>Optical fibers co-wound with superconducting tape that listen for microscopic acoustic strain sounds ($>25	ext{ kHz}$) before a quench occurs.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Tritium Breeding Ratio (TBR)</h4>
+                            <p>Ratio of tritium atoms created in the lithium blanket to tritium atoms consumed in the core. Must be $> 1.05$ for fuel self-sufficiency.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <h4>Rayleigh-Taylor Instability (in ICF)</h4>
+                            <p>Fluid mixing occurring when a light fluid pushes a heavy fluid. In ICF, tiny ablator spikes can puncture the central spark plug if laser beams are uneven.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <hr>
+
+                <!-- SECTION 8 -->
+                <section id="tut-failure-modes" class="tut-section">
+                    <h2>8. The 18 Failure Modes & Protections</h2>
+                    <p>
+                        TAMI monitors 18 distinct physical states across the three reactor topologies. Here is what happens physically during each anomaly and how the software responds:
+                    </p>
+
+                    <h3>8.1 Stellarator Modes (QI-HTS)</h3>
+                    <ul>
+                        <li><strong>HTS Hotspot Quench:</strong> A localized cooling drop or strain crack causes a 1 mm spot on a coil to exceed $92	ext{ K}$. Electrical resistance appears, creating intense heating. <em>Protection:</em> Level 1 FPGA fires a pyrotechnic breaker in $<22\,\mu	ext{s}$ to dump energy into external resistors.</li>
+                        <li><strong>Divertor Detachment Fault:</strong> Gas seeding valves clog, causing hot plasma to hit tungsten target plates directly at $>16	ext{ MW/m}^2$. <em>Protection:</em> Level 2 opens secondary gas valves and throttles heating power by 25%.</li>
+                        <li><strong>Core Tungsten Collapse:</strong> Sputtered heavy tungsten atoms enter the core, radiating energy away rapidly and dropping temperature. <em>Protection:</em> Central ECRH microwave mirrors reposition to flush impurities outward.</li>
+                        <li><strong>Pellet Refueling Burst:</strong> A frozen D-T pellet is shot into the core at $1,200	ext{ m/s}$, momentarily spiking density and alpha heating.</li>
+                        <li><strong>Startup Ignition Ramp:</strong> Energizing 20 modular coils from 0 to 5.5 Tesla while respecting mechanical stress limits ($<450	ext{ MPa}$).</li>
+                        <li><strong>Steady-State Nominal:</strong> Flattop high-confinement operation with $Q_{	ext{sci}} pprox 10.5$ and $+58	ext{ MW}$ net electric export.</li>
+                    </ul>
+
+                    <h3>8.2 Tokamak Modes</h3>
+                    <ul>
+                        <li><strong>Major Disruption:</strong> A locked tearing mode causes thermal collapse in $<1	ext{ ms}$, followed by inductive current collapse ($dI_p/dt pprox -10^9	ext{ A/s}$) generating $185	ext{ V}$ spikes. <em>Protection:</em> Shattered Pellet Injection (SPI) fires frozen neon pellets within 2 ms.</li>
+                        <li><strong>Vertical Displacement Event (VDE):</strong> Vertical positional feedback saturates; the plasma drifts $>40	ext{ mm}$ into the vessel. <em>Protection:</em> Fast in-vessel stabilizing coils fire immediately.</li>
+                        <li><strong>Type-I ELM Burst:</strong> Edge pressure gradient collapses, releasing periodic heat spikes ($16.4	ext{ MW/m}^2$) onto divertors. <em>Protection:</em> Resonant Magnetic Perturbation (RMP) coils maintain grassy ELM-free H-mode.</li>
+                        <li><strong>Runaway Electron Avalanche:</strong> Relativistic $3.8	ext{ MA}$ electron beam forms. <em>Protection:</em> Massive deuterium gas injection to raise density and brake the beam.</li>
+                        <li><strong>2/1 Neoclassical Tearing Mode:</strong> Magnetic island degrades energy confinement by 40%. <em>Protection:</em> Steerable microwave beams (ECCD) drive current into the island center to heal the magnetic field.</li>
+                        <li><strong>Nominal Flattop Burn:</strong> Inductive current flattop ($I_p = 15	ext{ MA}$, $q_{95} = 3.25$).</li>
+                    </ul>
+
+                    <h3>8.3 Inertial Confinement Modes (ICF)</h3>
+                    <ul>
+                        <li><strong>Rayleigh-Taylor Asymmetry:</strong> Ablator fingers penetrate the core spark hotspot, dropping yield by 90%. <em>Protection:</em> Laser pulse shaping increases fuel adiabat to smooth out perturbations.</li>
+                        <li><strong>Laser Timing Jitter:</strong> Laser amplifiers drift, causing beams to arrive $>35	ext{ ps}$ out of sync. <em>Protection:</em> Piezo-actuated optical delay lines re-align beam arrival before the next shot.</li>
+                        <li><strong>Final Optics Debris Damage:</strong> Target shrapnel degrades glass transmission to $<80\%$. <em>Protection:</em> Automated debris shield cassette advances clean protective glass.</li>
+                        <li><strong>Target Injection Miss:</strong> Pellet trajectory deviates $>40\,\mu	ext{m}$ from chamber center. <em>Protection:</em> Microsecond laser trigger interlock aborts the main amplifier pulse, dumping beam harmlessly into water calorimeters.</li>
+                        <li><strong>Chamber Clearing Choke:</strong> Residual metal vapor from previous shot exceeds $0.15	ext{ Pa}$, defocusing incoming beams. <em>Protection:</em> Controller pauses next shot by 100 ms to allow condensation.</li>
+                        <li><strong>5 Hz Nominal Repetition Pulse:</strong> Clean continuous microimplosions producing $914	ext{ MW}$ average fusion power and $+263	ext{ MW}$ net electric export.</li>
+                    </ul>
+                </section>
+
+                <hr>
+
+                <!-- SECTION 9 -->
+                <section id="tut-hts-coils" class="tut-section">
+                    <h2>9. Superconductors & REBCO Tape Coils</h2>
+                    <p>
+                        To generate 5.5 to 15 Tesla magnetic fields without melting copper wires from Joule heating ($I^2 R$), modern fusion reactors use <strong>High-Temperature Superconductors (HTS)</strong>.
+                    </p>
+                    <p>
+                        SKHY utilizes <strong>REBCO (Rare-Earth Barium Copper Oxide)</strong> tape cooled to <strong>20 Kelvin</strong> with supercritical helium. While copper loses gigawatts of electricity in resistive heat, REBCO conducts electricity with <strong>strictly zero electrical resistance</strong>, allowing a 4 mm wide tape ribbon to carry over <strong>500 Amperes</strong> of current!
+                    </p>
+                </section>
+
+                <hr>
+
+                <!-- SECTION 10 -->
+                <section id="tut-quench-foas" class="tut-section">
+                    <h2>10. Magnet Quench & FOAS Acoustic Detection</h2>
+                    <p>
+                        A <strong>Quench</strong> occurs when a tiny spot on a superconducting coil warms above its critical temperature ($T_c pprox 92	ext{ K}$). Electrical resistance suddenly reappears, causing intense localized Joule heating.
+                    </p>
+                    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Coil as REBCO Tape (20 K)
+    participant Hotspot as 1mm Hotspot (>92 K)
+    participant Kernel as Level 1 Safety Kernel (Rust)
+    participant Breaker as Fast Pyro-Breaker
+    Coil->>Hotspot: Strain crack or cooling void
+    Note over Hotspot: Temperature exceeds 92 K (Zero resistance lost!)
+    Hotspot->>Hotspot: Intense Joule heating (I^2 * R)
+    Kernel->>Kernel: FOAS Acoustic Burst (>25 kHz) + dC/dt detected
+    Kernel->>Breaker: Trigger Actuation: < 22 Microseconds!
+    Breaker->>Coil: Disconnects power and dumps 14 GJ into resistors
+                    </div>
+                    <p>
+                        Because heat spreads very slowly in REBCO (NZPV $pprox 0.01	ext{--}0.08	ext{ m/s}$), heat concentrates in a $1	ext{ mm}$ hotspot. To prevent melting, TAMI uses <strong>Fiber-Optic Acoustic Sensing (FOAS)</strong>—optical fibers that listen for ultrasonic acoustic emissions ($>25	ext{ kHz}$) caused by microscopic strain relaxations, triggering fast breakers in under <strong>50 microseconds</strong>.
+                    </p>
+                </section>
+
+                <hr>
+
+                <!-- SECTION 11 -->
+                <section id="tut-purdue" class="tut-section">
+                    <h2>11. Purdue 6-Tier Software Architecture</h2>
+                    <p>
+                        Industrial fusion power plants require rigorous cybersecurity and real-time determinism. TAMI adheres strictly to the <strong>Purdue Model (ISA-95)</strong> and <strong>IEC 62443</strong> industrial security standards:
+                    </p>
+                    <div class="mermaid">
+flowchart TD
+    subgraph Level5 [Level 5: Enterprise Agentic AI]
+        L5[FastAPI & Strawberry GraphQL Telemetry APIs]
+    end
+    subgraph Level4 [Level 4: Digital Twin & Data Lake]
+        L4[PyTorch Surrogate Engine & HDF5 Persistence]
+    end
+    subgraph Level3 [Level 3: Supervisory Middleware Hub]
+        L3[Rust High-Throughput DDS-to-Kafka Bridge & Rate Limiter]
+    end
+    subgraph Level2 [Level 2: Area Control Zone]
+        L2[Magnet Power Supply PLCs & Cryogenic Loop Regulators]
+    end
+    subgraph Level1 [Level 1: Edge Safety Interlocks]
+        L1[Rust Zero-Allocation Microsecond Safety Kernel MTCA.4]
+    end
+    subgraph Level0 [Level 0: Physical Fusion Hardware]
+        L0[REBCO Coils, FOAS Sensors, Laser Amplifiers, Divertors]
+    end
+    L0 <--> L1
+    L1 <--> L2
+    L2 <--> L3
+    L3 --> L4
+    L4 --> L5
+                    </div>
+                </section>
+
+                <hr>
+
+                <!-- SECTION 12 -->
+                <section id="tut-quickstart" class="tut-section">
+                    <h2>12. Hands-On: Running the Codebase</h2>
+                    <p>
+                        You can launch and interact with all levels of the system with a single command:
+                    </p>
+                    <div class="code-box">
+                        <pre><code>python run_demo.py</code></pre>
+                    </div>
+                    <p>
+                        This single command starts:
+                    </p>
+                    <ol>
+                        <li>Level 1 Edge Quench Protection Kernel (Rust / MTCA.4)</li>
+                        <li>Level 3 Supervisory Middleware Hub (Rust)</li>
+                        <li>Level 4/5 Data Lake API & Interactive Web Studio (FastAPI on port 8000)</li>
+                        <li>Level 4/5 Digital Twin PINN Engine (PyTorch)</li>
+                        <li>Level 0/1 Multi-Reactor Synthetic Telemetry Stream (25 Hz)</li>
+                        <li>Opens your default web browser directly to this Interactive Studio!</li>
+                    </ol>
+                    <p>
+                        To explore programmatically:
+                    </p>
+                    <ul>
+                        <li><strong>Interactive Web Studio:</strong> <a href="http://127.0.0.1:8000/tutorial/" target="_blank">http://127.0.0.1:8000/tutorial/</a></li>
+                        <li><strong>REST API Documentation:</strong> <a href="http://127.0.0.1:8000/docs" target="_blank">http://127.0.0.1:8000/docs</a></li>
+                        <li><strong>Strawberry GraphQL Playground:</strong> <a href="http://127.0.0.1:8000/graphql" target="_blank">http://127.0.0.1:8000/graphql</a></li>
+                        <li><strong>Active Reactors List:</strong> <a href="http://127.0.0.1:8000/api/v1/reactors" target="_blank">http://127.0.0.1:8000/api/v1/reactors</a></li>
+                    </ul>
+                </section>
+
+                <hr>
+
+                <!-- FOOTER CITATION -->
+                <div class="tut-footer-note">
+                    <p>
+                        <strong>Scientific References & Foundations:</strong> Physics formulations, power flow topologies, and research benchmark figures are sourced from <a href="https://www.fusionenergybase.com/articles?tag=physics" target="_blank">Fusion Energy Base</a>, the ITER Physics Basis, Abu-Shawareb et al. (NIF 2024), Keilhacker et al. (JET 1999), Creely et al. (SPARC 2020), and Wolf et al. (W7-X 2019).
+                    </p>
+                </div>
+
             </div>
         </section>
 
