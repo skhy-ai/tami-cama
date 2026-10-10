@@ -600,21 +600,24 @@ if __name__ == "__main__":
     parser.add_argument("--freq", type=float, default=20.0, help="Publishing frequency in Hz")
     parser.add_argument("--quench-after", type=float, default=None, help="Seconds before auto-triggering quench event")
     parser.add_argument("--reactor", type=str, default="stellarator",
-                        choices=["stellarator", "tokamak", "icf"], help="Active fusion reactor concept")
+                        choices=["stellarator", "tokamak", "icf", "REACTOR_QI_STELLARATOR", "REACTOR_TOKAMAK", "REACTOR_ICF"],
+                        help="Active fusion reactor concept (stellarator, tokamak, icf)")
     parser.add_argument("--mode", type=str, default="nominal",
                         help="Initial operational mode or automated cycle ('cycle')")
     parser.add_argument("--cycle-interval", type=float, default=10.0, help="Seconds per mode when in cycle mode")
     parser.add_argument("--sensor-id", type=str, default="FOAS-HTS-COIL-03A", help="Primary sensor ID")
     args = parser.parse_args()
 
-    reactor_map = {
-        "stellarator": ReactorType.REACTOR_QI_STELLARATOR,
-        "tokamak": ReactorType.REACTOR_TOKAMAK,
-        "icf": ReactorType.REACTOR_ICF
-    }
+    r_lower = args.reactor.lower()
+    if "tokamak" in r_lower:
+        active_r = ReactorType.REACTOR_TOKAMAK
+    elif "icf" in r_lower:
+        active_r = ReactorType.REACTOR_ICF
+    else:
+        active_r = ReactorType.REACTOR_QI_STELLARATOR
 
     gen = StellaratorSyntheticGenerator(sensor_id=args.sensor_id)
-    gen.set_reactor_type(reactor_map.get(args.reactor, ReactorType.REACTOR_QI_STELLARATOR))
+    gen.set_reactor_type(active_r)
 
     if args.mode == "cycle":
         gen.cycle_mode_active = True
