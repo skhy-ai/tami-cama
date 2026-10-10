@@ -295,6 +295,13 @@ def get_tutorial_md():
         return FileResponse(tutorial_path, media_type="text/markdown")
     raise HTTPException(status_code=404, detail="TUTORIAL.md not found")
 
+@app.get("/tutorial/TUTORIAL.md")
+def get_tutorial_md_sub():
+    tutorial_path = os.path.join(ROOT_DIR, "TUTORIAL.md")
+    if os.path.exists(tutorial_path):
+        return FileResponse(tutorial_path, media_type="text/markdown")
+    raise HTTPException(status_code=404, detail="TUTORIAL.md not found")
+
 @app.on_event("startup")
 def startup_event():
     init_hdf5()

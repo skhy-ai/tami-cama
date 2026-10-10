@@ -16,14 +16,19 @@ This guide breaks down every concept step-by-step using clear physical analogies
    - 2.4 [Laser Inertial Confinement Fusion (ICF)](#24-laser-inertial-confinement-fusion-icf)
    - 2.5 [The Lawson Criteria: Magnetic Confinement vs. Areal Density](#25-the-lawson-criteria-magnetic-confinement-vs-areal-density)
    - 2.6 [Plant Power Balance & 2D Sankey Energy Flow](#26-plant-power-balance--2d-sankey-energy-flow)
-   - 2.7 [Cross-Reactor Failure Modes & Edge Protection Matrix](#27-cross-reactor-failure-modes--edge-protection-matrix)
-3. [High-Temperature Superconductors (HTS) & REBCO Magnet Coils](#3-high-temperature-superconductors-hts--rebco-magnet-coils)
-4. [The Critical Failure: What is a Magnet Quench?](#4-the-critical-failure-what-is-a-magnet-quench)
-5. [How We Detect Quenches: FOAS & Stray Capacitance](#5-how-we-detect-quenches-foas--stray-capacitance)
-6. [The Software Architecture: Purdue 6-Tier Model & IEC 62443 Security](#6-the-software-architecture-purdue-6-tier-model--iec-62443-security)
-7. [Digital Twins, Three.js 3D Rendering & Physics-Informed Neural Networks (PINN)](#7-digital-twins-threejs-3d-rendering--physics-informed-neural-networks-pinn)
-8. [Codebase Execution Flow: Step-by-Step Telemetry Journey](#8-codebase-execution-flow-step-by-step-telemetry-journey)
-9. [External References & Scientific Citations](#9-external-references--scientific-citations)
+   - 2.7 [Landmark Fusion Experiments & Published Gain Presets](#27-landmark-fusion-experiments--published-gain-presets)
+3. [Exhaustive Fusion & I&C Terminology Glossary](#3-exhaustive-fusion--ic-terminology-glossary)
+4. [Cross-Reactor Failure Modes: Comprehensive Physics Deep-Dive](#4-cross-reactor-failure-modes-comprehensive-physics-deep-dive)
+   - 4.1 [Stellarator Failure Modes (QI-HTS)](#41-stellarator-failure-modes-qi-hts)
+   - 4.2 [Tokamak Failure Modes (Inductive & Steady-State)](#42-tokamak-failure-modes-inductive--steady-state)
+   - 4.3 [Inertial Confinement Failure Modes (Pulsed Laser ICF)](#43-inertial-confinement-failure-modes-pulsed-laser-icf)
+5. [High-Temperature Superconductors (HTS) & REBCO Magnet Coils](#5-high-temperature-superconductors-hts--rebco-magnet-coils)
+6. [The Critical Failure: What is a Magnet Quench?](#6-the-critical-failure-what-is-a-magnet-quench)
+7. [How We Detect Quenches: FOAS & Stray Capacitance](#7-how-we-detect-quenches-foas--stray-capacitance)
+8. [The Software Architecture: Purdue 6-Tier Model & IEC 62443 Security](#8-the-software-architecture-purdue-6-tier-model--iec-62443-security)
+9. [Digital Twins, Three.js 3D Rendering & Physics-Informed Neural Networks (PINN)](#9-digital-twins-threejs-3d-rendering--physics-informed-neural-networks-pinn)
+10. [Codebase Execution Flow: Step-by-Step Telemetry Journey](#10-codebase-execution-flow-step-by-step-telemetry-journey)
+11. [External References & Scientific Citations](#11-external-references--scientific-citations)
 
 ---
 
@@ -169,7 +174,7 @@ $$n \cdot T \cdot \tau_E \ge 3 \times 10^{21} \text{ keV}\cdot\text{s}\cdot\text
 
 #### 2. Inertial Confinement (Areal Density $\rho R$):
 $$\rho R \ge 3.0 \text{ g/cm}^2$$
-- Ultra-Short Confinement Time ($\tau_{\text{inertial}} \approx \frac{R}{c_s} \approx 0.1\text{ nanoseconds}$)
+- Ultra-Short Confinement Time ($\tau_{\text{inertial}} \approx \frac{R}{c_s} \approx 0.1\text{ ns}$)
 - Ultra-High Density ($\rho \approx 300\text{--}1000\text{ g/cm}^3$, or $10^{26}\text{ m}^{-3}$)
 
 ---
@@ -219,21 +224,230 @@ flowchart LR
 
 ---
 
-### 2.7 Cross-Reactor Failure Modes & Edge Protection Matrix
+### 2.7 Landmark Fusion Experiments & Published Gain Presets
 
-| Reactor Type | Failure Mode | Physical Root Cause | Microsecond Sensor Signature | Edge Actuator Action |
-| :--- | :--- | :--- | :--- | :--- |
-| **Tokamak** | **Major Disruption** | Resistive tearing modes lock to vessel; thermal collapse | Pick-up coils ($dB/dt$), loop voltage spike $>150\text{ V}$ | Massive Gas Injection (MGI) / Shattered Pellet |
-| **Tokamak** | **Vertical Displacement (VDE)** | Axisymmetric positional feedback saturation | Vertical position error $\Delta Z > 30\text{ mm}$ | Fast coil stabilization & emergency rampdown |
-| **Tokamak** | **Runaway Electron Beam** | Electric field exceeds Dreicer limit during current quench | Hard X-ray detectors & photoneutron emissions | Deuterium killer pellet injection |
-| **Stellarator** | **HTS Hotspot Quench** | Cryogenic helium cooling void in REBCO modular coil | FOAS acoustic emission $>25\text{ kHz}$, $dC/dt > 15\text{ pF/s}$ | Fast energy extraction dump breaker ($<50\text{ \mu s}$) |
-| **Stellarator** | **Divertor Detachment Fault** | Impurity seeding line clogged; radiative cooling lost | Strike tile thermocouple $>900^\circ\text{C}$, heat flux $>15\text{ MW/m}^2$ | Secondary gas puff actuator burst |
-| **ICF** | **Rayleigh-Taylor Instability** | Ablation-front perturbation grows exponentially: $\gamma = \sqrt{kg}$ | X-ray pinhole camera asymmetry RMS $>2.5\%$ | Laser beam balance trimming & adiabat shaping |
-| **ICF** | **Target Tracking Miss** | Target injection trajectory deviation at chamber center | Optical laser position gate error $>30\text{ \mu m}$ | Laser shot abort / dump beam to calorimeters |
+Different fusion concepts and historical machines have achieved widely varying scientific gains ($Q_{\text{sci}}$) and target gains ($G$). The 2D Energy Diagram allows you to load published presets directly from peer-reviewed literature:
+
+| Preset Name | Concept | Citation / Reference | Input Power / Energy | Fusion Yield | Gain Metric | Net Grid Power ($P_{\text{net}}$) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **JET D-T Record (1997)** | Tokamak | Keilhacker et al., *Nuclear Fusion* 39, 209 (1999) | $P_{\text{heat}} = 24.0\text{ MW}$ | $P_{\text{fus}} = 16.1\text{ MW}$ | $Q_{\text{sci}} = 0.67$ | **$-32.5\text{ MW}$** (Net Consumer) |
+| **ITER Baseline Target** | Tokamak | ITER Physics Basis, *Nuclear Fusion* 39, 2137 (1999) | $P_{\text{aux}} = 50.0\text{ MW}$ | $P_{\text{fus}} = 500.0\text{ MW}$ | $Q_{\text{sci}} = 10.0$ | **$+125.0\text{ MW}$** (Design Benchmark) |
+| **SPARC CFS Baseline** | Compact HTS Tokamak | Creely et al., *J. Plasma Phys.* 86, 865860502 (2020) | $P_{\text{in}} = 12.5\text{ MW}$ | $P_{\text{fus}} = 140.0\text{ MW}$ | $Q_{\text{sci}} = 11.2$ | **$+38.5\text{ MW}$** (High-Field Net) |
+| **NIF Target Ignition (2022/23)** | Laser ICF | Abu-Shawareb et al., *Phys. Rev. Lett.* 132, 065102 (2024) | $E_{\text{laser}} = 2.05\text{ MJ}$ | $E_{\text{fus}} = 3.88\text{ MJ}$ | $G = 1.89$ | **$-12.2\text{ MW}$** (Lab Ignition Only) |
+| **IFE Commercial Plant Target** | Laser ICF | Meier et al., *Laser & Particle Beams* 32, 281 (2014) | $E_{\text{laser}} = 2.15\text{ MJ}$ ($5\text{ Hz}$) | $E_{\text{fus}} = 182.8\text{ MJ}$ | $G = 85.0$ | **$+263.5\text{ MW}$** (Commercial Surplus) |
+| **W7-X Record Triple Product** | QI Stellarator | Wolf et al., *Physics of Plasmas* 26, 082504 (2019) | $P_{\text{ECRH}} = 7.0\text{ MW}$ | Pure Deuterium Test | $n\tau T = 6.5\times 10^{19}$ | Laboratory Milestone (Non-D-T) |
+| **SKHY Commercial Stellarator** | QI Modular HTS | SKHY Engineering Baseline Spec (2026) | $P_{\text{heat}} = 25.0\text{ MW}$ | $P_{\text{fus}} = 262.5\text{ MW}$ | $Q_{\text{sci}} = 10.5$ | **$+58.2\text{ MW}$** (Steady-State Export) |
 
 ---
 
-## 3. High-Temperature Superconductors (HTS) & REBCO Magnet Coils
+## 3. Exhaustive Fusion & I&C Terminology Glossary
+
+To help engineers and researchers navigate the codebase, here are rigorous explanations of every core term:
+
+### 1. Scientific Gain ($Q_{\text{sci}}$)
+The ratio of nuclear fusion power produced by the plasma to the external heating power injected into the plasma:
+$$Q_{\text{sci}} = \frac{P_{\text{fusion}}}{P_{\text{injected}}}$$
+- $Q < 1.0$: Sub-breakeven regime.
+- $Q = 1.0$: **Scientific Breakeven** (fusion power equals external heating power).
+- $Q = 5.0$: **Alpha Heating Dominated** (self-heating from $3.52\text{ MeV}$ helium nuclei equals external heating).
+- $Q = \infty$: **Thermonuclear Ignition** (the reaction is completely self-sustaining without external heating).
+
+### 2. Engineering Gain ($Q_{\text{eng}}$)
+The ratio of gross electrical energy produced by the plant turbines to the total electrical energy recirculated to run the reactor:
+$$Q_{\text{eng}} = \frac{P_{\text{gross,electric}}}{P_{\text{recirculating,electric}}}$$
+For a commercial plant to sell electricity economically to the grid, it requires $Q_{\text{eng}} \ge 2.5\text{--}4.0$.
+
+### 3. Target Gain ($G$ in ICF)
+In laser-driven inertial confinement, target gain is defined as the fusion energy yield per shot divided by the laser pulse energy incident on the target capsule:
+$$G = \frac{E_{\text{fusion}}}{E_{\text{laser}}}$$
+
+### 4. Lawson Triple Product ($n \cdot T \cdot \tau_E$)
+The product of plasma density $n$, ion temperature $T$, and energy confinement time $\tau_E$. It represents the fundamental criterion for net power balance. For D-T fusion, ignition requires $n \cdot T \cdot \tau_E \ge 3 \times 10^{21}\text{ keV}\cdot\text{s}\cdot\text{m}^{-3}$.
+
+### 5. Energy Confinement Time ($\tau_E$)
+The characteristic timescale over which thermal energy leaks out of the magnetic confinement volume:
+$$\tau_E = \frac{W_{\text{thermal}}}{P_{\text{loss}}}$$
+Where $W_{\text{thermal}} = \frac{3}{2} \int (n_e T_e + n_i T_i) \, dV$. In commercial reactors, $\tau_E \sim 1.5\text{--}3.0\text{ seconds}$.
+
+### 6. Kruskal-Shafranov Safety Factor ($q_{95}$)
+The number of toroidal turns a magnetic field line makes per single poloidal turn at the 95% flux surface. In tokamaks, operating at $q_{95} < 2.0$ causes violent $m=1, 2$ external kink instabilities that terminate the discharge.
+
+### 7. Greenwald Density Limit ($n_G$)
+An empirical upper boundary on electron density in tokamaks:
+$$n_G = \frac{I_p}{\pi a^2} \times 10^{20}\text{ m}^{-3}$$
+Exceeding $n_G$ triggers edge radiation instability and disruptive termination.
+
+### 8. Toroidal Beta ($\beta$) and Normalized Beta ($\beta_N$)
+The ratio of plasma thermal pressure to magnetic field pressure:
+$$\beta = \frac{\langle p \rangle}{B^2 / 2\mu_0}$$
+The Troyon limit defines the maximum stable beta in tokamaks: $\beta_N = \beta \frac{a B_T}{I_p} \le 2.8\text{--}3.5$.
+
+### 9. Neoclassical Tearing Modes (NTM)
+Resistive MHD instabilities in tokamaks where helical magnetic islands grow at rational surfaces ($q = 2/1$ or $q = 3/2$), flattening temperature profiles and degrading energy confinement by up to 50%.
+
+### 10. Edge-Localized Modes (ELMs)
+Periodic explosive relaxation instabilities at the steep transport barrier (pedestal) of H-mode plasmas, expelling gigawatt-level heat bursts onto divertor plates.
+
+### 11. Vertical Displacement Event (VDE)
+In elongated tokamaks ($\kappa > 1.5$), the plasma is vertically unstable. If active feedback coils saturate, the entire plasma column drifts vertically into the vacuum vessel wall within milliseconds, generating massive destructive **halo currents**.
+
+### 12. Runaway Electrons & Dreicer Field
+During a rapid thermal quench in tokamaks, the inductive loop voltage surges. If the electric field exceeds the Dreicer critical limit ($E_D$), collisional friction drops, accelerating electrons to relativistic velocities ($\sim 50\text{ MeV}$) forming a concentrated beam that can pierce the stainless steel vacuum vessel.
+
+### 13. Normal Zone Propagation Velocity (NZPV)
+The speed at which a resistive hotspot propagates along a superconducting tape:
+- Low-Temperature Superconductors (NbTi): $\text{NZPV} \sim 10\text{--}30\text{ m/s}$ (heats quickly and spreads safely).
+- High-Temperature Superconductors (REBCO): $\text{NZPV} \sim 0.01\text{--}0.08\text{ m/s}$ (stagnant, concentrating heat in a $1\text{ mm}$ hotspot).
+
+### 14. Fiber-Optic Acoustic Sensing (FOAS)
+Ultrasonic diagnostic technique using co-wound optical fiber to detect high-frequency acoustic emissions ($25\text{--}40\text{ kHz}$) emitted when crystalline REBCO layers experience micro-delamination and Lorentz strain relaxation prior to thermal quench.
+
+### 15. Dual-Coolant Lead-Lithium (DCLL) Blanket
+A breeding blanket concept using liquid eutectic Lead-Lithium ($\text{Pb}_{84}\text{Li}_{16}$) circulating at $450\text{--}550^\circ\text{C}$ to both breed tritium via neutron capture on ${}^6\text{Li}$ and transfer heat to power turbines.
+
+### 16. Tritium Breeding Ratio (TBR)
+The number of tritium atoms bred in the blanket per tritium atom consumed in the core:
+$$\text{TBR} = \frac{\text{Tritium Bred}}{\text{Tritium Burned}}$$
+Self-sufficiency requires $\text{TBR} \ge 1.05\text{--}1.15$ to account for radioactive decay ($t_{1/2} = 12.3\text{ years}$) and processing losses.
+
+### 17. Rayleigh-Taylor (RT) Instability in ICF
+A fluid instability occurring when a low-density ablating plasma accelerates a high-density fuel shell. Small initial perturbations grow exponentially ($\gamma = \sqrt{k g}$), puncturing the shell and cooling the central spark hotspot.
+
+---
+
+## 4. Cross-Reactor Failure Modes: Comprehensive Physics Deep-Dive
+
+The TAMI control stack monitors and mitigates 18 distinct failure modes across the three reactor topologies:
+
+### 4.1 Stellarator Failure Modes (QI-HTS)
+
+```mermaid
+graph TD
+    S_Normal["MODE_STEADY_STATE_NOMINAL"] --> S_Quench["MODE_HTS_COIL_HOTSPOT_QUENCH"]
+    S_Normal --> S_Div["MODE_DIVERTOR_DETACHMENT_FAULT"]
+    S_Normal --> S_Imp["MODE_IMPURITY_ACCUMULATION"]
+    S_Normal --> S_Pellet["MODE_PELLET_REFUELING_BURST"]
+    S_Normal --> S_Ramp["MODE_STARTUP_RAMP"]
+    
+    S_Quench --> Edge_Quench["Level 1 Fast Pyro-Breaker Dump (<50 microseconds)"]
+    S_Div --> Edge_Puff["Level 2 Secondary Ar/Ne Gas Injection Actuator"]
+    S_Imp --> Edge_ECRH["Level 3 Core ECRH Microwave Peaking"]
+```
+
+#### 1. `MODE_HTS_COIL_HOTSPOT_QUENCH` (Critical)
+- **Physics Root Cause**: Localized cryogenic helium cooling void or epoxy debonding in a 3D non-planar REBCO coil. Local temperature exceeds $T_c \approx 92\text{ K}$, causing local electrical resistance and $I^2 R$ Joule heating.
+- **Sensor Signature**: FOAS acoustic emission spike $> 25\text{ kHz}$, co-wound stray capacitance rate $dC/dt > 15\text{ pF/s}$, $dT/dt > 5.0\text{ K/s}$.
+- **Edge Action**: Level 1 FPGA triggers pyrotechnic breaker within $< 22\,\mu\text{s}$, dumping 14 gigajoules of magnetic energy into external resistive dump banks.
+
+#### 2. `MODE_DIVERTOR_DETACHMENT_FAULT` (Anomaly)
+- **Physics Root Cause**: Argon/Neon radiative impurity gas puffing valve clogs. The scrape-off layer (SOL) plasma re-attaches directly to tungsten island divertor target plates.
+- **Sensor Signature**: Divertor target heat flux surges past the engineering threshold ($10\text{ MW/m}^2$) to $> 16.8\text{ MW/m}^2$; tile thermocouples exceed $920^\circ\text{C}$.
+- **Edge Action**: Level 2 PLC opens secondary reserve gas puff conduits and throttles auxiliary ECRH heating power by 25%.
+
+#### 3. `MODE_IMPURITY_ACCUMULATION` (Anomaly)
+- **Physics Root Cause**: High-Z tungsten atoms sputtered from divertor plates migrate into the core. High radiative Bremsstrahlung cooling ($P_{\text{rad}} \propto Z^2$) cools the core center.
+- **Sensor Signature**: Soft X-ray core emissivity surges, core electron temperature drops from $14.5\text{ keV}$ to $< 6.2\text{ keV}$, scientific gain degrades to $Q_{\text{sci}} \approx 2.4$.
+- **Edge Action**: Level 3 supervisory hub repositions central ECRH microwave mirrors to heat the center and drive outward neoclassical impurity flushing.
+
+#### 4. `MODE_PELLET_REFUELING_BURST` (Nominal Transient)
+- **Physics Root Cause**: Cryogenic frozen Deuterium-Tritium pellet injected at $1200\text{ m/s}$ vaporizes in core plasma.
+- **Sensor Signature**: Instantaneous density spike ($n_e > 2.8 \times 10^{20}\text{ m}^{-3}$), temporary drop in core temperature followed by a $35\%$ surge in alpha heating.
+- **Edge Action**: Fast feedforward control on fueling injectors to maintain stable pressure profile.
+
+#### 5. `MODE_STARTUP_RAMP` (Nominal Transient)
+- **Physics Root Cause**: Energizing 20 modular coils from 0 to 5.5 Tesla, establishing 20 Kelvin cryogenics, and initial ECRH microwave breakdown.
+- **Sensor Signature**: Coil mechanical stress ramps from 0 to $145\text{ MPa}$; microwave absorbed power reaches $15\text{ MW}$.
+- **Edge Action**: Coordinated power supply ramping adhering to strict magnet stress limits.
+
+---
+
+### 4.2 Tokamak Failure Modes (Inductive & Steady-State)
+
+```mermaid
+graph TD
+    T_Normal["MODE_TOKAMAK_NOMINAL_BURNTIME"] --> T_Disrupt["MODE_TOKAMAK_MAJOR_DISRUPTION"]
+    T_Normal --> T_VDE["MODE_TOKAMAK_VERTICAL_DISPLACEMENT_EVENT"]
+    T_Normal --> T_ELM["MODE_TOKAMAK_UNMITIGATED_ELM_BURST"]
+    T_Normal --> T_Runaway["MODE_TOKAMAK_RUNAWAY_ELECTRON_AVALANCHE"]
+    T_Normal --> T_NTM["MODE_TOKAMAK_NEOCLASSICAL_TEARING_MODE"]
+    
+    T_Disrupt --> Edge_SPI["Level 1 Shattered Pellet Injection (SPI) Killer Pellets"]
+    T_VDE --> Edge_Coil["Level 1 Fast Vertical Stabilizing Coil Actuation"]
+    T_Runaway --> Edge_D2["Level 1 High-Z Gas Dissipation & Magnetic Deconfinement"]
+    T_NTM --> Edge_ECCD["Level 2 Localized Electron Cyclotron Current Drive (ECCD)"]
+```
+
+#### 1. `MODE_TOKAMAK_MAJOR_DISRUPTION` (Critical)
+- **Physics Root Cause**: MHD instability (e.g., $m=2, n=1$ locked mode) triggers a sudden **Thermal Quench** ($< 1\text{ ms}$), dumping all thermal energy onto the walls. The freezing plasma's electrical resistance spikes, causing a catastrophic **Current Quench** ($dI_p/dt \approx -10^9\text{ A/s}$).
+- **Sensor Signature**: Magnetic pick-up coils ($dB/dt$), loop voltage spike $V_{\text{loop}} > 185\text{ Volts}$, massive hard X-ray bursts.
+- **Edge Action**: Level 1 interlock fires **Shattered Pellet Injection (SPI)** containing cryogenic Neon/Deuterium bullets within $< 2\text{ ms}$ to radiate energy uniformly and suppress runaway electron formation.
+
+#### 2. `MODE_TOKAMAK_VERTICAL_DISPLACEMENT_EVENT (VDE)` (Critical)
+- **Physics Root Cause**: Loss of vertical positional feedback control in elongated plasma ($\kappa \approx 1.7$). The plasma column moves vertically into the ceiling or floor of the vacuum vessel.
+- **Sensor Signature**: Vertical magnetic axis deviation $\Delta Z > 40\text{ mm}$, halo currents $> 2.8\text{ MA}$ conducted through structural vessel supports.
+- **Edge Action**: Emergency excitation of in-vessel fast stabilizing coils; immediate emergency shutdown.
+
+#### 3. `MODE_TOKAMAK_UNMITIGATED_ELM_BURST` (Anomaly)
+- **Physics Root Cause**: Pressure gradient at the H-mode edge pedestal exceeds the peeling-ballooning MHD limit.
+- **Sensor Signature**: Mirnov coil oscillation burst, divertor heat flux surges to $16.4\text{ MW/m}^2$, high-speed camera detects edge plasma filaments expelling radially.
+- **Edge Action**: Level 2 PLC triggers Resonant Magnetic Perturbation (RMP) coils to degrade the pedestal slightly and maintain continuous ELM-free grassy operation.
+
+#### 4. `MODE_TOKAMAK_RUNAWAY_ELECTRON_AVALANCHE` (Critical)
+- **Physics Root Cause**: High electric fields during current quench accelerate electrons beyond collisional drag, multiplying exponentially via knock-on collisions into a $3.8\text{ MA}$ relativistic electron beam.
+- **Sensor Signature**: Hard X-ray and photoneutron detectors saturate; synchrotron infrared cameras detect concentrated hotspot on first wall.
+- **Edge Action**: Fast massive deuterium gas injection to raise electron density and stop the beam before it pierces the water-cooled vacuum vessel.
+
+#### 5. `MODE_TOKAMAK_NEOCLASSICAL_TEARING_MODE (NTM)` (Anomaly)
+- **Physics Root Cause**: Deficit in bootstrap current caused by local pressure flattening generates magnetic islands at rational surfaces ($q = 2/1$).
+- **Sensor Signature**: Mirnov coil phase-locked signature at $18\text{ kHz}$; energy confinement time drops by $40\%$.
+- **Edge Action**: Level 2 PLC steers steerable Electron Cyclotron Current Drive (ECCD) microwave beams directly into the O-point of the island to replace the missing bootstrap current.
+
+---
+
+### 4.3 Inertial Confinement Failure Modes (Pulsed Laser ICF)
+
+```mermaid
+graph TD
+    I_Normal["MODE_ICF_NOMINAL_REPETITION_PULSE"] --> I_RT["MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY"]
+    I_Normal --> I_Jitter["MODE_ICF_LASER_POWER_IMBALANCE_JITTER"]
+    I_Normal --> I_Optics["MODE_ICF_FINAL_OPTICS_DEBRIS_DAMAGE"]
+    I_Normal --> I_Miss["MODE_ICF_TARGET_TRACKING_INJECTION_MISS"]
+    I_Normal --> I_Choke["MODE_ICF_CHAMBER_CLEARING_PRESSURE_CHOKE"]
+    
+    I_RT --> Edge_Shaping["Level 2 Laser Adiabat Pulse Shaping & SSD Bandwidth"]
+    I_Jitter --> Edge_Opto["Level 1 Master Laser Diode Optical Sync Calibration"]
+    I_Miss --> Edge_Abort["Level 1 Laser Fire Interlock Abort / Beam Calorimeter Dump"]
+    I_Choke --> Edge_Vapor["Level 2 Condensation Spray & Vacuum Pump Throttle"]
+```
+
+#### 1. `MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY` (Critical)
+- **Physics Root Cause**: Laser illumination non-uniformity or capsule surface roughness seeds Rayleigh-Taylor hydrodynamic instability. Cold ablator fingers penetrate into the central deuterium-tritium spark hotspot.
+- **Sensor Signature**: Multi-axis X-ray streak cameras detect implosion symmetry distortion RMS $> 2.8\%$; neutron yield collapses by $90\%$ ($G < 8.0$).
+- **Edge Action**: Real-time laser pulse shaping adjustments to increase fuel adiabat ($\alpha$), suppressing instability growth at the cost of slight compression efficiency.
+
+#### 2. `MODE_ICF_LASER_POWER_IMBALANCE_JITTER` (Anomaly)
+- **Physics Root Cause**: Thermal drift in diode-pumped solid-state laser amplifiers causes beam-to-beam energy imbalances and arrival timing jitter.
+- **Sensor Signature**: Optical streak detectors measure arrival timing jitter $> 35\text{ picoseconds}$ across the 16 beam ports.
+- **Edge Action**: Automated optical delay line piezo-actuation and Pockels cell attenuation trimming prior to next repetition pulse.
+
+#### 3. `MODE_ICF_FINAL_OPTICS_DEBRIS_DAMAGE` (Anomaly)
+- **Physics Root Cause**: Shrapnel and debris from previous target capsule explosions deposit on final focusing fused-silica optics.
+- **Sensor Signature**: Final optics laser transmission drops from $98.2\%$ to $< 80.0\%$; laser-induced damage threshold sensors flag surface ablation.
+- **Edge Action**: Level 2 PLC indexes automated debris shield cassette and triggers supersonic argon gas purge across final optic mirrors.
+
+#### 4. `MODE_ICF_TARGET_TRACKING_INJECTION_MISS` (Critical)
+- **Physics Root Cause**: Target injector gun thermal expansion causes cryogenic fuel pellet to deviate from designated chamber center focal point.
+- **Sensor Signature**: Dual-axis orthogonal optical tracking gates calculate position error $\Delta r > 40\,\mu\text{m}$ at chamber center.
+- **Edge Action**: Level 1 microsecond laser trigger interlock aborts main amplifier flashlamps within $< 50\,\mu\text{s}$, diverting the $2.15\text{ MJ}$ beam into water-cooled beam dumps.
+
+#### 5. `MODE_ICF_CHAMBER_CLEARING_PRESSURE_CHOKE` (Anomaly)
+- **Physics Root Cause**: Vaporized target debris and lithium coolant mist from previous shot do not condense quickly enough before next scheduled shot ($5\text{ Hz} = 200\text{ ms}$ inter-shot period).
+- **Sensor Signature**: Target chamber vacuum gauges measure residual pressure $> 0.15\text{ Pa}$ ($> 1.1\times 10^{-3}\text{ Torr}$). Laser beams would experience non-linear optical filamentation and defocusing.
+- **Edge Action**: Supervisory controller delays next injection trigger by $100\text{ ms}$ and increases cryogenic condensation wall cooling.
+
+---
+
+## 5. High-Temperature Superconductors (HTS) & REBCO Magnet Coils
 
 To create 5.5 to 15 Tesla magnetic fields without melting copper wires from Joule heating ($I^2 R$), magnetic confinement reactors use **Superconducting Magnets**.
 
@@ -244,7 +458,7 @@ We utilize **REBCO (Rare-Earth Barium Copper Oxide)** high-temperature supercond
 
 ---
 
-## 4. The Critical Failure: What is a Magnet Quench?
+## 6. The Critical Failure: What is a Magnet Quench?
 
 A **Quench** is a thermal runaway event where a localized section of superconductor loses its superconducting state:
 
@@ -269,7 +483,7 @@ Because REBCO has a very low **Normal Zone Propagation Velocity (NZPV $\approx 0
 
 ---
 
-## 5. How We Detect Quenches: FOAS & Stray Capacitance
+## 7. How We Detect Quenches: FOAS & Stray Capacitance
 
 To detect hotspot inception before voltages become dangerous, TAMI employs dual complementary physical diagnostics:
 
@@ -281,7 +495,7 @@ To detect hotspot inception before voltages become dangerous, TAMI employs dual 
 
 ---
 
-## 6. The Software Architecture: Purdue 6-Tier Model & IEC 62443 Security
+## 8. The Software Architecture: Purdue 6-Tier Model & IEC 62443 Security
 
 The TAMI control infrastructure is structured strictly under the **Purdue Model (ISA-95)** and compliant with **IEC 62443** industrial cybersecurity zones:
 
@@ -321,14 +535,14 @@ flowchart TD
     L4_2 -->|Read-Only REST/GraphQL| L5
 ```
 
-- **Level 1 (Edge Protection)**: Written in **Rust** (`edge_quench`). Guarantees zero-heap allocations and evaluates interlock logic in **$< 50\text{ \mu s}$**.
+- **Level 1 (Edge Protection)**: Written in **Rust** (`edge_quench`). Guarantees zero-heap allocations and evaluates interlock logic in **$< 50\,\mu\text{s}$**.
 - **Level 3 (Supervisory Middleware)**: Written in **Rust** (`middleware_hub`). Enforces token-bucket rate limiting ($100\text{ msgs/s}$) and bridges DDS real-time buses to enterprise Kafka.
 - **Level 4 (Digital Twin & Data Lake)**: Python PyTorch surrogate models and HDF5 storage (`tami_data_lake.h5`).
 - **Level 5 (Enterprise AI Ingestion)**: FastAPI and Strawberry GraphQL (`ai_ingestion_api.py`) exposing read-only data for training AI agent models.
 
 ---
 
-## 7. Digital Twins, Three.js 3D Rendering & Physics-Informed Neural Networks (PINN)
+## 9. Digital Twins, Three.js 3D Rendering & Physics-Informed Neural Networks (PINN)
 
 The TAMI digital twin runs an interactive **Three.js WebGL 3D Studio** and a **PyTorch Physics-Informed Neural Network (PINN)**:
 
@@ -346,7 +560,7 @@ $$\Delta^* \psi = -\mu_0 R^2 \frac{dp}{d\psi} - F \frac{dF}{d\psi}$$
 
 ---
 
-## 8. Codebase Execution Flow: Step-by-Step Telemetry Journey
+## 10. Codebase Execution Flow: Step-by-Step Telemetry Journey
 
 When running the TAMI demonstration pipeline (`run_demo.py`):
 
@@ -371,7 +585,7 @@ sequenceDiagram
 
 ---
 
-## 9. External References & Scientific Citations
+## 11. External References & Scientific Citations
 
 1. **Fusion Physics & Power Plant Simulators**:
    - [Fusion Energy Base - Fusion Power Plant Simulator](https://www.fusionenergybase.com/fusion-power-plant-simulator)

@@ -199,7 +199,7 @@ function initTabNavigation() {
                 renderMermaidDiagrams();
             } else if (targetTab === 'power-balance') {
                 renderSankeyDiagram();
-            } else if (targetTab === 'pinn-twin') {
+            } else if (targetTab === 'digital-twin-studio' || targetTab === 'pinn-twin' || targetTab === 'subsystems-twin') {
                 onWindowResize3D();
             }
         });
@@ -726,6 +726,17 @@ function init2DSankeySimulator() {
         if (slider) slider.addEventListener('input', updateSankeyPhysics);
     });
 
+    // Research Paper Presets Listeners
+    const presetBtns = document.querySelectorAll('.preset-card-btn');
+    presetBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            presetBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const key = btn.getAttribute('data-paper-preset');
+            loadResearchPaperPreset(key);
+        });
+    });
+
     // Init Particle Flow
     for (let i = 0; i < 45; i++) {
         sankeyParticles.push({
@@ -738,6 +749,156 @@ function init2DSankeySimulator() {
 
     updateSankeyPhysics();
     requestAnimationFrame(animateSankeyCanvas);
+}
+
+const RESEARCH_PAPER_PRESETS = {
+    'skhy_qi': {
+        name: 'SKHY Commercial QI Stellarator',
+        regime: 'steady',
+        fuel: 'DT',
+        qsci: 10.5,
+        pheat: 25.0,
+        etath: 38,
+        etaheat: 60,
+        blanketm: 1.15,
+        paux: 10.0,
+        reactor: 'REACTOR_QI_STELLARATOR'
+    },
+    'jet_dt': {
+        name: 'JET D-T Fusion Record (1997)',
+        regime: 'steady',
+        fuel: 'DT',
+        qsci: 0.67,
+        pheat: 24.0,
+        etath: 33,
+        etaheat: 50,
+        blanketm: 1.0,
+        paux: 15.0,
+        reactor: 'REACTOR_TOKAMAK'
+    },
+    'iter_baseline': {
+        name: 'ITER Baseline Design Target',
+        regime: 'steady',
+        fuel: 'DT',
+        qsci: 10.0,
+        pheat: 50.0,
+        etath: 35,
+        etaheat: 55,
+        blanketm: 1.10,
+        paux: 25.0,
+        reactor: 'REACTOR_TOKAMAK'
+    },
+    'sparc_cfs': {
+        name: 'SPARC High-Field Tokamak (CFS)',
+        regime: 'steady',
+        fuel: 'DT',
+        qsci: 11.2,
+        pheat: 12.5,
+        etath: 38,
+        etaheat: 60,
+        blanketm: 1.15,
+        paux: 8.0,
+        reactor: 'REACTOR_TOKAMAK'
+    },
+    'nif_ignition': {
+        name: 'NIF Laser Target Ignition (2022/23)',
+        regime: 'pulsed',
+        fuel: 'DT',
+        elaser: 2.05,
+        frep: 1.0,
+        targetgain: 1.89,
+        etath: 30,
+        etaheat: 15,
+        blanketm: 1.0,
+        paux: 5.0,
+        reactor: 'REACTOR_ICF'
+    },
+    'ife_plant': {
+        name: 'IFE Commercial Power Plant',
+        regime: 'pulsed',
+        fuel: 'DT',
+        elaser: 2.15,
+        frep: 5.0,
+        targetgain: 85.0,
+        etath: 38,
+        etaheat: 15,
+        blanketm: 1.15,
+        paux: 12.0,
+        reactor: 'REACTOR_ICF'
+    },
+    'w7x_record': {
+        name: 'Wendelstein 7-X Triple Product',
+        regime: 'steady',
+        fuel: 'DD',
+        qsci: 0.15,
+        pheat: 7.0,
+        etath: 30,
+        etaheat: 60,
+        blanketm: 1.0,
+        paux: 12.0,
+        reactor: 'REACTOR_QI_STELLARATOR'
+    }
+};
+
+function loadResearchPaperPreset(presetKey) {
+    const p = RESEARCH_PAPER_PRESETS[presetKey];
+    if (!p) return;
+
+    // Set regime
+    const btnSteady = document.getElementById('btn-regime-steady');
+    const btnPulsed = document.getElementById('btn-regime-pulsed');
+    if (p.regime === 'pulsed' && btnPulsed) btnPulsed.click();
+    else if (btnSteady) btnSteady.click();
+
+    // Set fuel
+    const fuelBtn = document.getElementById(`btn-fuel-${p.fuel.toLowerCase()}`);
+    if (fuelBtn) fuelBtn.click();
+
+    // Set slider values
+    if (p.qsci !== undefined) {
+        const el = document.getElementById('qsci-slider');
+        if (el) el.value = p.qsci;
+    }
+    if (p.pheat !== undefined) {
+        const el = document.getElementById('pheat-slider');
+        if (el) el.value = p.pheat;
+    }
+    if (p.elaser !== undefined) {
+        const el = document.getElementById('elaser-slider');
+        if (el) el.value = p.elaser;
+    }
+    if (p.frep !== undefined) {
+        const el = document.getElementById('frep-slider');
+        if (el) el.value = p.frep;
+    }
+    if (p.targetgain !== undefined) {
+        const el = document.getElementById('targetgain-slider');
+        if (el) el.value = p.targetgain;
+    }
+    if (p.etath !== undefined) {
+        const el = document.getElementById('etath-slider');
+        if (el) el.value = p.etath;
+    }
+    if (p.etaheat !== undefined) {
+        const el = document.getElementById('etaheat-slider');
+        if (el) el.value = p.etaheat;
+    }
+    if (p.blanketm !== undefined) {
+        const el = document.getElementById('blanketm-slider');
+        if (el) el.value = p.blanketm;
+    }
+    if (p.paux !== undefined) {
+        const el = document.getElementById('paux-slider');
+        if (el) el.value = p.paux;
+    }
+
+    // Switch reactor if different
+    if (p.reactor && p.reactor !== activeReactor) {
+        const rBtn = document.querySelector(`.reactor-btn[data-reactor="${p.reactor}"]`);
+        if (rBtn) rBtn.click();
+    }
+
+    updateSankeyPhysics();
 }
 
 function syncSankeyToReactor(reactorId) {
@@ -1697,22 +1858,30 @@ function initMarkdownTutorial() {
     const viewer = document.getElementById('markdown-viewer');
     if (!viewer) return;
 
-    fetch('/TUTORIAL.md')
-        .then(res => {
-            if (!res.ok) throw new Error('Local tutorial markdown file not found');
-            return res.text();
-        })
-        .then(md => {
-            viewer.innerHTML = renderMarkdownWithMathAndMermaid(md);
-            renderMermaidDiagrams();
-        })
-        .catch(err => {
-            console.error('Error fetching TUTORIAL.md:', err);
-            viewer.innerHTML = `
-                <h2>📖 Beginner's Tutorial Loaded</h2>
-                <p>Please open <a href="/TUTORIAL.md" target="_blank">TUTORIAL.md</a> to view the complete guide.</p>
-            `;
-        });
+    const candidatePaths = ['TUTORIAL.md', '/TUTORIAL.md', '/tutorial/TUTORIAL.md'];
+
+    async function loadTutorial() {
+        for (const p of candidatePaths) {
+            try {
+                const res = await fetch(p);
+                if (res.ok) {
+                    const md = await res.text();
+                    viewer.innerHTML = renderMarkdownWithMathAndMermaid(md);
+                    renderMermaidDiagrams();
+                    return;
+                }
+            } catch (e) {}
+        }
+        throw new Error('Could not fetch TUTORIAL.md from candidate paths');
+    }
+
+    loadTutorial().catch(err => {
+        console.error('Error fetching TUTORIAL.md:', err);
+        viewer.innerHTML = `
+            <h2>📖 Beginner's Tutorial Loaded</h2>
+            <p>Please open <a href="/TUTORIAL.md" target="_blank">TUTORIAL.md</a> to view the complete guide.</p>
+        `;
+    });
 }
 
 function renderMarkdownWithMathAndMermaid(rawText) {

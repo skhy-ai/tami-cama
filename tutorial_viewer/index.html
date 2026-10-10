@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TAMI - Superconducting Stellarator Control & Quench Tutorial Viewer</title>
+    <title>TAMI - Multi-Reactor Fusion Digital Twin & Control Stack</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,12 +33,11 @@
                 </div>
             </div>
             <nav class="nav-links">
-                <button class="nav-btn active" data-tab="interactive-sim">Edge Interlock Simulator</button>
-                <button class="nav-btn" data-tab="subsystems-twin">Subsystems & Modes Twin</button>
-                <button class="nav-btn" data-tab="power-balance">2D Energy Diagram (Sankey)</button>
-                <button class="nav-btn" data-tab="purdue-explorer">Purdue 6-Tier Architecture</button>
-                <button class="nav-btn" data-tab="pinn-twin">3D Three.js Digital Twin</button>
-                <button class="nav-btn" data-tab="guide-doc">Beginner Guide & Diagrams</button>
+                <button class="nav-btn active" data-tab="guide-doc">📖 Beginner Guide & Physics</button>
+                <button class="nav-btn" data-tab="digital-twin-studio">🌐 3D Digital Twin Studio & Subsystems</button>
+                <button class="nav-btn" data-tab="power-balance">⚛️ 2D Energy Diagram (Sankey & Presets)</button>
+                <button class="nav-btn" data-tab="interactive-sim">⚡ Quench & FOAS Edge Simulator</button>
+                <button class="nav-btn" data-tab="purdue-explorer">🏛 Purdue 6-Tier Architecture</button>
             </nav>
         </div>
     </header>
@@ -85,391 +84,409 @@
 
     <main class="main-content">
         
-        <!-- SECTION 1: Interactive Magnet Quench Simulator -->
-        <section id="interactive-sim" class="tab-pane active">
-            <div class="section-header">
-                <h2>⚡ Interactive REBCO Magnet Quench & FOAS Acoustic Simulator</h2>
-                <p class="section-desc">Adjust temperature, acoustic emission strain frequency, and NZPV to observe real-time MTCA.4 microsecond interlocks.</p>
+        <!-- SECTION 1 (DEFAULT ACTIVE): Beginner Guide & Markdown Diagrams (TUTORIAL.md) -->
+        <section id="guide-doc" class="tab-pane active">
+            <div class="section-header tutorial-section-header">
+                <h2>📖 Beginner's Tutorial & Fusion Physics Guide</h2>
+                <p class="section-desc">Comprehensive step-by-step guide to nuclear fusion, multi-reactor topologies, failure mode physics, and the TAMI Purdue 6-tier control stack with KaTeX LaTeX mathematics and Mermaid diagrams.</p>
             </div>
 
-            <div class="simulator-grid">
-                <!-- Controls Card -->
-                <div class="card glass-card controls-card">
-                    <h3>Sensor Parameter Controls</h3>
-                    
-                    <div class="control-group">
-                        <label for="temp-slider">
-                            Localized REBCO Temperature (K)
-                            <span class="val-badge" id="temp-val">20.0 K</span>
-                        </label>
-                        <input type="range" id="temp-slider" min="10" max="110" value="20" step="0.5">
-                        <div class="slider-labels">
-                            <span>20K (Cryo)</span>
-                            <span class="warning-mark">70K (Warning)</span>
-                            <span class="critical-mark">90K (Quench T_c)</span>
-                        </div>
-                    </div>
-
-                    <div class="control-group">
-                        <label for="foas-slider">
-                            FOAS Acoustic Strain Frequency (Hz)
-                            <span class="val-badge" id="foas-val">1,200 Hz</span>
-                        </label>
-                        <input type="range" id="foas-slider" min="100" max="40000" value="1200" step="100">
-                        <div class="slider-labels">
-                            <span>100 Hz (Ambient)</span>
-                            <span class="critical-mark">25,000 Hz (Stress Burst Threshold)</span>
-                        </div>
-                    </div>
-
-                    <div class="control-group">
-                        <label for="cap-slider">
-                            Capacitance Shift Rate dC/dt (pF/s)
-                            <span class="val-badge" id="cap-val">0.2 pF/s</span>
-                        </label>
-                        <input type="range" id="cap-slider" min="0" max="50" value="0.2" step="0.1">
-                    </div>
-
-                    <div class="preset-buttons">
-                        <button class="btn btn-secondary" id="btn-preset-nominal">Nominal Cryo Preset</button>
-                        <button class="btn btn-danger" id="btn-preset-quench">Trigger REBCO Quench Anomaly</button>
-                    </div>
-                </div>
-
-                <!-- Live Interlock Gauge & Status -->
-                <div class="card glass-card status-card">
-                    <h3>Level 1 MTCA.4 Edge Safety Kernel Output</h3>
-                    
-                    <div class="status-indicator-box" id="status-box">
-                        <div class="status-dot green-pulse" id="status-dot"></div>
-                        <div class="status-info">
-                            <div class="status-title" id="status-title">SYSTEM STATE: NOMINAL</div>
-                            <div class="status-sub" id="status-sub">Superconducting state active. Zero resistance.</div>
-                        </div>
-                    </div>
-
-                    <div class="metrics-grid">
-                        <div class="metric-box">
-                            <span class="metric-label">Calculated NZPV</span>
-                            <span class="metric-value" id="nzpv-val">0.0000 m/s</span>
-                        </div>
-                        <div class="metric-box">
-                            <span class="metric-label">Interlock Latency</span>
-                            <span class="metric-value highlight-cyan" id="latency-val">21.4 μs</span>
-                        </div>
-                        <div class="metric-box">
-                            <span class="metric-label">FOAS Acoustic Burst</span>
-                            <span class="metric-value" id="acoustic-status">Normal (<25 kHz)</span>
-                        </div>
-                        <div class="metric-box">
-                            <span class="metric-label">Breaker Actuator</span>
-                            <span class="metric-value" id="breaker-status">CLOSED (Energized)</span>
-                        </div>
-                    </div>
-
-                    <div class="oscilloscope-box">
-                        <div class="canvas-header">Live Sensor Waveform & Interlock Signal</div>
-                        <canvas id="waveform-canvas" width="450" height="120"></canvas>
-                    </div>
-                </div>
+            <div class="tutorial-white-container" id="markdown-viewer">
+                <div class="loading-spinner">Loading tutorial content, typesetting LaTeX math, and rendering Mermaid diagrams...</div>
             </div>
         </section>
 
-        <!-- SECTION: Stellarator Subsystems Digital Twin & Feature Modes Simulator -->
-        <section id="subsystems-twin" class="tab-pane">
+        <!-- SECTION 2: Unified 3D Digital Twin Studio & Subsystems Twin -->
+        <section id="digital-twin-studio" class="tab-pane">
             <div class="section-header">
-                <h2>🌐 Modular Stellarator Subsystems Digital Twin & Operational Modes</h2>
-                <p class="section-desc">Run individual and coupled digital twins across the 5 stellarator core subsystems. Trigger various feature and failure modes to observe dynamic multi-physics responses in real-time.</p>
+                <h2>🌐 Unified 3D Digital Twin Studio & Subsystems Telemetry</h2>
+                <p class="section-desc">Real-time coupled multi-physics simulation: Three.js 3D reactor viewport, operational & failure mode switching, and live telemetry across all 5 core fusion subsystems.</p>
             </div>
 
-            <!-- Operational Feature Modes Selector Strip -->
-            <div class="card glass-card mode-selector-wrapper">
-                <div class="mode-selector-header">
-                    <h3>Select Operational / Anomaly Mode</h3>
-                    <div class="mode-status-badge" id="active-mode-badge">
-                        <span class="status-indicator-dot dot-green" id="active-mode-dot"></span>
-                        <span id="active-mode-name">MODE: STEADY_STATE_NOMINAL</span>
-                    </div>
-                </div>
-                <div class="mode-buttons-strip">
-                    <button class="mode-btn active" data-mode="MODE_STEADY_STATE_NOMINAL" id="btn-mode-steady">
-                        <span>🟢</span> Steady-State Nominal
-                    </button>
-                    <button class="mode-btn btn-mode-div" data-mode="MODE_DIVERTOR_DETACHMENT_FAULT" id="btn-mode-div">
-                        <span>🔥</span> Divertor Detachment Fault
-                    </button>
-                    <button class="mode-btn btn-mode-quench" data-mode="MODE_HTS_COIL_HOTSPOT_QUENCH" id="btn-mode-quench">
-                        <span>⚡</span> HTS Coil Hotspot Quench
-                    </button>
-                    <button class="mode-btn btn-mode-pellet" data-mode="MODE_PELLET_REFUELING_BURST" id="btn-mode-pellet">
-                        <span>❄️</span> Pellet Refueling Burst
-                    </button>
-                    <button class="mode-btn" data-mode="MODE_IMPURITY_ACCUMULATION" id="btn-mode-impurity">
-                        <span>⚠️</span> Core Impurity Collapse
-                    </button>
-                    <button class="mode-btn" data-mode="MODE_STARTUP_RAMP" id="btn-mode-startup">
-                        <span>🚀</span> Startup Ignition Ramp
-                    </button>
-                    <button class="mode-btn" data-mode="AUTO_CYCLE" id="btn-mode-autocycle">
-                        <span>🔄</span> Auto-Cycle Demo
-                    </button>
-                </div>
-            </div>
+            <div class="unified-twin-studio">
+                <!-- Top Row: 3D Viewport & Physics Telemetry HUD -->
+                <div class="studio-top-grid">
+                    <!-- 3D Viewport Card -->
+                    <div class="card glass-card canvas-3d-viewport-card">
+                        <div class="canvas-header-3d">
+                            <div class="canvas-title-group">
+                                <span class="active-reactor-3d-title" id="canvas-reactor-title">3D TWIN: QI MODULAR STELLARATOR</span>
+                                <span class="active-mode-3d-subtitle" id="canvas-mode-subtitle">Mode: Steady-State Nominal Confinement</span>
+                            </div>
+                            <div class="viewport-status-pills">
+                                <span class="live-tag" id="webgl-fps-tag">60 FPS WEBGL</span>
+                                <span class="live-tag highlight-cyan">ORBIT CONTROLS ACTIVE</span>
+                            </div>
+                        </div>
 
-            <!-- Subsystems Grid -->
-            <div class="subsystems-grid-layout">
-                <!-- Subsystem 1: HTS Magnet Coils & Cryogenics -->
-                <div class="subsystem-card coil-card">
-                    <div>
-                        <div class="subsystem-header">
-                            <div>
-                                <h4>1. HTS Coils & Cryogenics</h4>
-                                <div class="subsystem-sub">REBCO Non-Planar Magnets</div>
+                        <!-- 3D Viewport Container -->
+                        <div class="threejs-container" id="threejs-container">
+                            <!-- Floating Failure Anomaly Banner -->
+                            <div class="threejs-alert-banner" id="threejs-alert-banner" style="display: none;">
+                                <span class="alert-icon">⚠️</span>
+                                <span class="alert-text" id="threejs-alert-text">ANOMALY DETECTED: MAJOR DISRUPTION / CURRENT QUENCH</span>
                             </div>
-                            <span class="subsystem-badge" id="sub1-badge">HTS-COIL-03</span>
-                        </div>
-                        <div class="subsystem-metrics">
-                            <div class="metric-row">
-                                <span class="metric-name">Coil Temperature</span>
-                                <span class="metric-data highlight-cyan" id="sub1-temp">20.0 K</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Quench Margin (ΔT_c)</span>
-                                <span class="metric-data" id="sub1-margin">72.0 K</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Helium Coolant Pressure</span>
-                                <span class="metric-data" id="sub1-he-press">5.20 bar</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Lorentz Stress</span>
-                                <span class="metric-data" id="sub1-stress">145.0 MPa</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Critical Current (I / I_c)</span>
-                                <span class="metric-data" id="sub1-ic-ratio">0.58</span>
-                            </div>
-                            <div class="gauge-bar-wrapper">
-                                <div class="gauge-label">
-                                    <span>Current Margin Ratio</span>
-                                    <span id="sub1-ic-pct">58%</span>
-                                </div>
-                                <div class="gauge-bar-track">
-                                    <div class="gauge-bar-fill bg-cyan" id="sub1-ic-bar" style="width: 58%;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="subsystem-footer-status">
-                        <span class="status-indicator-dot dot-green" id="sub1-dot"></span>
-                        <span id="sub1-status">Superconducting State Nominal</span>
-                    </div>
-                </div>
 
-                <!-- Subsystem 2: Plasma Core & Confinement -->
-                <div class="subsystem-card plasma-card">
-                    <div>
-                        <div class="subsystem-header">
-                            <div>
-                                <h4>2. Plasma Core & Confinement</h4>
-                                <div class="subsystem-sub">Quasi-Isodynamic (QI) Core</div>
+                            <!-- Camera Preset Toolbar -->
+                            <div class="threejs-camera-hud">
+                                <span class="hud-label">CAMERA:</span>
+                                <button class="hud-btn active" data-cam="perspective" id="btn-cam-persp">Perspective</button>
+                                <button class="hud-btn" data-cam="top" id="btn-cam-top">Top View</button>
+                                <button class="hud-btn" data-cam="front" id="btn-cam-front">Front</button>
+                                <button class="hud-btn" data-cam="iso" id="btn-cam-iso">Isometric</button>
+                                <button class="hud-btn" data-cam="reset" id="btn-cam-reset">Reset</button>
                             </div>
-                            <span class="subsystem-badge">V3FIT SURROGATE</span>
-                        </div>
-                        <div class="subsystem-metrics">
-                            <div class="metric-row">
-                                <span class="metric-name">Core Temp (T_e / T_i)</span>
-                                <span class="metric-data highlight-gold" id="sub2-temp">14.8 / 14.2 keV</span>
+
+                            <!-- Layer Visibility Toggles -->
+                            <div class="threejs-layers-hud">
+                                <span class="hud-label">LAYERS:</span>
+                                <label class="layer-checkbox">
+                                    <input type="checkbox" id="layer-coils" checked>
+                                    <span class="layer-name" id="layer-coils-label">Coils / Laser Beams</span>
+                                </label>
+                                <label class="layer-checkbox">
+                                    <input type="checkbox" id="layer-plasma" checked>
+                                    <span class="layer-name" id="layer-plasma-label">Plasma / Target</span>
+                                </label>
+                                <label class="layer-checkbox">
+                                    <input type="checkbox" id="layer-divertor" checked>
+                                    <span class="layer-name" id="layer-divertor-label">Divertor / Chamber</span>
+                                </label>
+                                <label class="layer-checkbox">
+                                    <input type="checkbox" id="layer-heat" checked>
+                                    <span class="layer-name">Thermal Heatmap</span>
+                                </label>
                             </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Core Density (n_e)</span>
-                                <span class="metric-data" id="sub2-density">1.85 × 10²⁰ m⁻³</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Confinement Time (τ_E)</span>
-                                <span class="metric-data" id="sub2-tau">1.65 s</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Lawson Triple Product</span>
-                                <span class="metric-data highlight-green" id="sub2-lawson">43.3 keV·s·m⁻³</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Toroidal Beta (β)</span>
-                                <span class="metric-data" id="sub2-beta">4.25%</span>
-                            </div>
-                            <div class="gauge-bar-wrapper">
-                                <div class="gauge-label">
-                                    <span>Lawson Triple Product vs Ignition</span>
-                                    <span id="sub2-lawson-pct">87%</span>
-                                </div>
-                                <div class="gauge-bar-track">
-                                    <div class="gauge-bar-fill bg-purple" id="sub2-lawson-bar" style="width: 87%;"></div>
-                                </div>
+
+                            <!-- Interactive Instructions Badge -->
+                            <div class="threejs-hint-badge">
+                                🖱️ Left-Click: Rotate • Right-Click: Pan • Scroll: Zoom
                             </div>
                         </div>
                     </div>
-                    <div class="subsystem-footer-status">
-                        <span class="status-indicator-dot dot-green" id="sub2-dot"></span>
-                        <span id="sub2-status">MHD Quiescent Equilibrium</span>
+
+                    <!-- 3D Physics Telemetry Card -->
+                    <div class="card glass-card twin-stats-card">
+                        <div class="twin-stats-header">
+                            <h3>Physics Telemetry HUD</h3>
+                            <span class="subsystem-badge" id="twin-topology-badge">QI-HTS</span>
+                        </div>
+
+                        <div class="twin-metrics-container" id="twin-metrics-container">
+                            <div class="stat-item">
+                                <span class="stat-name" id="stat-1-name">Toroidal Beta ($\beta$)</span>
+                                <span class="stat-val highlight-gold" id="stat-1-val">4.25%</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-name" id="stat-2-name">Magnetic Axis Shift</span>
+                                <span class="stat-val" id="stat-2-val">+1.82 mm</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-name" id="stat-3-name">Peak Magnet Stress</span>
+                                <span class="stat-val" id="stat-3-val">142.5 MPa</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-name" id="stat-4-name">PINN Residual Loss</span>
+                                <span class="stat-val highlight-green" id="stat-4-val">0.00124</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-name" id="stat-5-name">Equilibrium Status</span>
+                                <span class="stat-val highlight-green" id="stat-5-val">CONVERGED</span>
+                            </div>
+                        </div>
+
+                        <div class="info-box-pinn" id="twin-info-box">
+                            <p id="twin-physics-info"><strong>Quasi-Isodynamic Optimization:</strong> Modular non-planar coils produce omnigenous magnetic surfaces with zero bounce-averaged radial drift, eliminating 1/nu ripple losses while remaining intrinsically disruption-free.</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Subsystem 3: Island Divertor & Heat Exhaust -->
-                <div class="subsystem-card divertor-card">
-                    <div>
-                        <div class="subsystem-header">
-                            <div>
-                                <h4>3. Island Divertor & Exhaust</h4>
-                                <div class="subsystem-sub">Scrape-off Layer (SOL) Boundary</div>
-                            </div>
-                            <span class="subsystem-badge">W-TILES</span>
-                        </div>
-                        <div class="subsystem-metrics">
-                            <div class="metric-row">
-                                <span class="metric-name">Peak Strike Heat Flux</span>
-                                <span class="metric-data" id="sub3-flux">4.20 MW/m²</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Max Engineering Limit</span>
-                                <span class="metric-data">10.0 MW/m²</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Target Tile Temp</span>
-                                <span class="metric-data" id="sub3-temp">485.0 °C</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Detachment Regime</span>
-                                <span class="metric-data highlight-green" id="sub3-detach">RADIATIVELY DETACHED</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Argon/Neon Puff Rate</span>
-                                <span class="metric-data" id="sub3-seeding">1.45 Pa·m³/s</span>
-                            </div>
-                            <div class="gauge-bar-wrapper">
-                                <div class="gauge-label">
-                                    <span>Divertor Thermal Load Limit</span>
-                                    <span id="sub3-load-pct">42%</span>
-                                </div>
-                                <div class="gauge-bar-track">
-                                    <div class="gauge-bar-fill bg-green" id="sub3-flux-bar" style="width: 42%;"></div>
-                                </div>
-                            </div>
+                <!-- Middle Row: Operational Feature Modes Selector Strip -->
+                <div class="card glass-card mode-selector-wrapper">
+                    <div class="mode-selector-header">
+                        <h3>Select Operational / Anomaly Mode</h3>
+                        <div class="mode-status-badge" id="active-mode-badge">
+                            <span class="status-indicator-dot dot-green" id="active-mode-dot"></span>
+                            <span id="active-mode-name">MODE: STEADY_STATE_NOMINAL</span>
                         </div>
                     </div>
-                    <div class="subsystem-footer-status">
-                        <span class="status-indicator-dot dot-green" id="sub3-dot"></span>
-                        <span id="sub3-status">Divertor Target Safe (<10 MW/m²)</span>
+                    <div class="mode-buttons-strip">
+                        <!-- Populated dynamically by app.js based on active reactor -->
                     </div>
                 </div>
 
-                <!-- Subsystem 4: Liquid PbLi Breeding Blanket -->
-                <div class="subsystem-card blanket-card">
-                    <div>
-                        <div class="subsystem-header">
-                            <div>
-                                <h4>4. Breeding Blanket & Fuel</h4>
-                                <div class="subsystem-sub">Liquid Eutectic PbLi Coolant</div>
+                <!-- Bottom Row: Subsystems Grid -->
+                <div class="subsystems-grid-layout">
+                    <!-- Subsystem 1: Superconducting Magnet Coils & Cryogenics -->
+                    <div class="subsystem-card coil-card">
+                        <div>
+                            <div class="subsystem-header">
+                                <div>
+                                    <h4>1. HTS Magnet Coils & Cryo</h4>
+                                    <div class="subsystem-sub">REBCO Winding Pack (20K)</div>
+                                </div>
+                                <span class="subsystem-badge">REBCO TAPE</span>
                             </div>
-                            <span class="subsystem-badge">DCLL MODULE</span>
+                            <div class="subsystem-metrics">
+                                <div class="metric-row">
+                                    <span class="metric-name">Average Coil Temperature</span>
+                                    <span class="metric-data" id="sub1-temp">20.45 K</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Critical Temp Margin (Tc=92K)</span>
+                                    <span class="metric-data highlight-green" id="sub1-margin">+71.55 K</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Peak Lorentz Stress</span>
+                                    <span class="metric-data" id="sub1-stress">142.5 MPa</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Supercritical Helium Flow</span>
+                                    <span class="metric-data">14.2 g/s</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Inlet Pressure</span>
+                                    <span class="metric-data">4.8 bar</span>
+                                </div>
+                                <div class="gauge-bar-wrapper">
+                                    <div class="gauge-label">
+                                        <span>Quench Margin Safety</span>
+                                        <span id="sub1-margin-pct">78%</span>
+                                    </div>
+                                    <div class="gauge-bar-track">
+                                        <div class="gauge-bar-fill bg-green" id="sub1-margin-bar" style="width: 78%;"></div>
+                                    </div>
+                                </div>
+                                <div class="gauge-bar-wrapper">
+                                    <div class="gauge-label">
+                                        <span>Mechanical Stress Limit (450 MPa)</span>
+                                        <span id="sub1-stress-pct">31%</span>
+                                    </div>
+                                    <div class="gauge-bar-track">
+                                        <div class="gauge-bar-fill bg-cyan" id="sub1-stress-bar" style="width: 31%;"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="subsystem-metrics">
-                            <div class="metric-row">
-                                <span class="metric-name">PbLi Coolant Inlet / Outlet</span>
-                                <span class="metric-data" id="sub4-temp">350.0 / 495.0 °C</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Neutron Wall Load (14.1 MeV)</span>
-                                <span class="metric-data" id="sub4-neutron">1.85 MW/m²</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Tritium Breeding Ratio (TBR)</span>
-                                <span class="metric-data highlight-green" id="sub4-tbr">1.150 (>1.05 Target)</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Daily Tritium Harvest</span>
-                                <span class="metric-data highlight-gold" id="sub4-tritium">142.0 g/day</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Coolant Mass Flow</span>
-                                <span class="metric-data" id="sub4-flow">280.0 kg/s</span>
-                            </div>
-                            <div class="gauge-bar-wrapper">
-                                <div class="gauge-label">
-                                    <span>Tritium Self-Sufficiency (TBR)</span>
-                                    <span id="sub4-tbr-pct">115%</span>
-                                </div>
-                                <div class="gauge-bar-track">
-                                    <div class="gauge-bar-fill bg-green" id="sub4-tbr-bar" style="width: 100%;"></div>
-                                </div>
-                            </div>
+                        <div class="subsystem-footer-status">
+                            <span class="status-indicator-dot dot-green" id="sub1-dot"></span>
+                            <span id="sub1-status">Superconducting State Nominal</span>
                         </div>
                     </div>
-                    <div class="subsystem-footer-status">
-                        <span class="status-indicator-dot dot-green" id="sub4-dot"></span>
-                        <span id="sub4-status">Tritium Self-Sufficiency Sustained</span>
-                    </div>
-                </div>
 
-                <!-- Subsystem 5: Balance of Plant (BoP) & Electrical Power -->
-                <div class="subsystem-card power-card">
-                    <div>
-                        <div class="subsystem-header">
-                            <div>
-                                <h4>5. Power Plant Balance (BoP)</h4>
-                                <div class="subsystem-sub">Turbine & Grid Interconnect</div>
+                    <!-- Subsystem 2: High-Beta Core Plasma Equilibrium -->
+                    <div class="subsystem-card plasma-card">
+                        <div>
+                            <div class="subsystem-header">
+                                <div>
+                                    <h4>2. Plasma Core & Equilibrium</h4>
+                                    <div class="subsystem-sub">V3FIT 3D Reconstruction</div>
+                                </div>
+                                <span class="subsystem-badge">QI HIGH-BETA</span>
                             </div>
-                            <span class="subsystem-badge">SAM WURZEL MODEL</span>
+                            <div class="subsystem-metrics">
+                                <div class="metric-row">
+                                    <span class="metric-name">Core Electron Temp (Te)</span>
+                                    <span class="metric-data highlight-gold" id="sub2-temp">14.50 keV</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Lawson Triple Product</span>
+                                    <span class="metric-data highlight-cyan" id="sub2-lawson">4.85e21 keV·s/m³</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Toroidal Beta (&beta;)</span>
+                                    <span class="metric-data" id="sub2-beta">4.25%</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Energy Confinement (&tau;E)</span>
+                                    <span class="metric-data" id="sub2-tau">1.82 s</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Greenwald Density Fraction</span>
+                                    <span class="metric-data">0.72</span>
+                                </div>
+                                <div class="gauge-bar-wrapper">
+                                    <div class="gauge-label">
+                                        <span>Toroidal Beta Target (5.0%)</span>
+                                        <span id="sub2-beta-pct">85%</span>
+                                    </div>
+                                    <div class="gauge-bar-track">
+                                        <div class="gauge-bar-fill bg-gold" id="sub2-beta-bar" style="width: 85%;"></div>
+                                    </div>
+                                </div>
+                                <div class="gauge-bar-wrapper">
+                                    <div class="gauge-label">
+                                        <span>Lawson Triple Product Breakeven</span>
+                                        <span id="sub2-lawson-pct">100%</span>
+                                    </div>
+                                    <div class="gauge-bar-track">
+                                        <div class="gauge-bar-fill bg-cyan" id="sub2-lawson-bar" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="subsystem-metrics">
-                            <div class="metric-row">
-                                <span class="metric-name">Scientific Gain (Q_sci)</span>
-                                <span class="metric-data highlight-gold" id="sub5-qsci">10.20</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Total Fusion Power</span>
-                                <span class="metric-data highlight-cyan" id="sub5-pfusion">255.0 MW</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Gross Electric Generation</span>
-                                <span class="metric-data" id="sub5-pgross">106.4 MW</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Aux Recirculating Power</span>
-                                <span class="metric-data" id="sub5-precirc">50.2 MW</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-name">Net Grid Export (P_net)</span>
-                                <span class="metric-data highlight-green" id="sub5-pnet">+56.2 MW</span>
-                            </div>
-                            <div class="gauge-bar-wrapper">
-                                <div class="gauge-label">
-                                    <span>Engineering Gain (Q_eng)</span>
-                                    <span id="sub5-qeng">2.12</span>
-                                </div>
-                                <div class="gauge-bar-track">
-                                    <div class="gauge-bar-fill bg-gold" id="sub5-qeng-bar" style="width: 70%;"></div>
-                                </div>
-                            </div>
+                        <div class="subsystem-footer-status">
+                            <span class="status-indicator-dot dot-green" id="sub2-dot"></span>
+                            <span id="sub2-status">MHD Quiescent Equilibrium</span>
                         </div>
                     </div>
-                    <div class="subsystem-footer-status">
-                        <span class="status-indicator-dot dot-green" id="sub5-dot"></span>
-                        <span id="sub5-status">Surplus Power Exported to Public Grid</span>
-                    </div>
-                </div>
 
-                <!-- Subsystem 6: Multi-Subsystem State Machine Diagram (Mermaid) -->
-                <div class="subsystem-card" style="border-top-color: #CBD5E1;">
-                    <div>
-                        <div class="subsystem-header">
-                            <div>
-                                <h4>6. System State Machine</h4>
-                                <div class="subsystem-sub">Coupled Multi-Physics Transitions</div>
+                    <!-- Subsystem 3: Island Divertor & Exhaust -->
+                    <div class="subsystem-card divertor-card">
+                        <div>
+                            <div class="subsystem-header">
+                                <div>
+                                    <h4>3. Divertor & Exhaust</h4>
+                                    <div class="subsystem-sub">Scrape-off Layer Boundary</div>
+                                </div>
+                                <span class="subsystem-badge">W-TILES</span>
                             </div>
-                            <span class="subsystem-badge">IEC 62443 CONDUIT</span>
+                            <div class="subsystem-metrics">
+                                <div class="metric-row">
+                                    <span class="metric-name">Peak Strike Heat Flux</span>
+                                    <span class="metric-data" id="sub3-flux">4.20 MW/m²</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Max Engineering Limit</span>
+                                    <span class="metric-data">10.0 MW/m²</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Target Tile Temp</span>
+                                    <span class="metric-data" id="sub3-temp">485.0 °C</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Detachment Regime</span>
+                                    <span class="metric-data highlight-green" id="sub3-detach">RADIATIVELY DETACHED</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Argon/Neon Puff Rate</span>
+                                    <span class="metric-data" id="sub3-seeding">1.45 Pa·m³/s</span>
+                                </div>
+                                <div class="gauge-bar-wrapper">
+                                    <div class="gauge-label">
+                                        <span>Divertor Thermal Load Limit</span>
+                                        <span id="sub3-load-pct">42%</span>
+                                    </div>
+                                    <div class="gauge-bar-track">
+                                        <div class="gauge-bar-fill bg-green" id="sub3-flux-bar" style="width: 42%;"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="subsystem-metrics" style="margin-bottom: 0;">
-                            <div class="mermaid" style="margin: 0; padding: 10px; font-size: 11px;">
+                        <div class="subsystem-footer-status">
+                            <span class="status-indicator-dot dot-green" id="sub3-dot"></span>
+                            <span id="sub3-status">Divertor Target Safe (<10 MW/m²)</span>
+                        </div>
+                    </div>
+
+                    <!-- Subsystem 4: Liquid PbLi Breeding Blanket -->
+                    <div class="subsystem-card blanket-card">
+                        <div>
+                            <div class="subsystem-header">
+                                <div>
+                                    <h4>4. Breeding Blanket & Fuel</h4>
+                                    <div class="subsystem-sub">Liquid Eutectic PbLi Coolant</div>
+                                </div>
+                                <span class="subsystem-badge">DCLL MODULE</span>
+                            </div>
+                            <div class="subsystem-metrics">
+                                <div class="metric-row">
+                                    <span class="metric-name">PbLi Coolant Inlet / Outlet</span>
+                                    <span class="metric-data" id="sub4-temp">350.0 / 495.0 °C</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Neutron Wall Load (14.1 MeV)</span>
+                                    <span class="metric-data" id="sub4-neutron">1.85 MW/m²</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Tritium Breeding Ratio (TBR)</span>
+                                    <span class="metric-data highlight-green" id="sub4-tbr">1.150 (>1.05 Target)</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Daily Tritium Harvest</span>
+                                    <span class="metric-data highlight-gold" id="sub4-tritium">142.0 g/day</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Coolant Mass Flow</span>
+                                    <span class="metric-data" id="sub4-flow">280.0 kg/s</span>
+                                </div>
+                                <div class="gauge-bar-wrapper">
+                                    <div class="gauge-label">
+                                        <span>Tritium Self-Sufficiency (TBR)</span>
+                                        <span id="sub4-tbr-pct">115%</span>
+                                    </div>
+                                    <div class="gauge-bar-track">
+                                        <div class="gauge-bar-fill bg-green" id="sub4-tbr-bar" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="subsystem-footer-status">
+                            <span class="status-indicator-dot dot-green" id="sub4-dot"></span>
+                            <span id="sub4-status">Tritium Self-Sufficiency Sustained</span>
+                        </div>
+                    </div>
+
+                    <!-- Subsystem 5: Balance of Plant (BoP) & Electrical Power -->
+                    <div class="subsystem-card power-card">
+                        <div>
+                            <div class="subsystem-header">
+                                <div>
+                                    <h4>5. Power Plant Balance (BoP)</h4>
+                                    <div class="subsystem-sub">Turbine & Grid Interconnect</div>
+                                </div>
+                                <span class="subsystem-badge">SAM WURZEL MODEL</span>
+                            </div>
+                            <div class="subsystem-metrics">
+                                <div class="metric-row">
+                                    <span class="metric-name">Scientific Gain (Q_sci)</span>
+                                    <span class="metric-data highlight-gold" id="sub5-qsci">10.20</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Total Fusion Power</span>
+                                    <span class="metric-data highlight-cyan" id="sub5-pfusion">255.0 MW</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Gross Electric Generation</span>
+                                    <span class="metric-data" id="sub5-pgross">106.4 MW</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Aux Recirculating Power</span>
+                                    <span class="metric-data" id="sub5-precirc">50.2 MW</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-name">Net Grid Export (P_net)</span>
+                                    <span class="metric-data highlight-green" id="sub5-pnet">+56.2 MW</span>
+                                </div>
+                                <div class="gauge-bar-wrapper">
+                                    <div class="gauge-label">
+                                        <span>Engineering Gain (Q_eng)</span>
+                                        <span id="sub5-qeng">2.12</span>
+                                    </div>
+                                    <div class="gauge-bar-track">
+                                        <div class="gauge-bar-fill bg-gold" id="sub5-qeng-bar" style="width: 70%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="subsystem-footer-status">
+                            <span class="status-indicator-dot dot-green" id="sub5-dot"></span>
+                            <span id="sub5-status">Surplus Power Exported to Public Grid</span>
+                        </div>
+                    </div>
+
+                    <!-- Subsystem 6: Multi-Subsystem State Machine Diagram (Mermaid) -->
+                    <div class="subsystem-card" style="border-top-color: #CBD5E1;">
+                        <div>
+                            <div class="subsystem-header">
+                                <div>
+                                    <h4>6. System State Machine</h4>
+                                    <div class="subsystem-sub">Coupled Multi-Physics Transitions</div>
+                                </div>
+                                <span class="subsystem-badge">IEC 62443 CONDUIT</span>
+                            </div>
+                            <div class="subsystem-metrics" style="margin-bottom: 0;">
+                                <div class="mermaid" style="margin: 0; padding: 10px; font-size: 11px;">
 stateDiagram-v2
     [*] --> StartupRamp
     StartupRamp --> SteadyState : Coils Energized & ECRH Break
@@ -480,22 +497,68 @@ stateDiagram-v2
     SteadyState --> ImpurityCollapse : Core Sputtering
     SteadyState --> QuenchDump : Hotspot >90K / Acoustic >25kHz
     QuenchDump --> [*] : Fast Energy Extraction
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="subsystem-footer-status">
-                        <span class="status-indicator-dot dot-green"></span>
-                        <span>State Machine Active & Deterministic</span>
+                        <div class="subsystem-footer-status">
+                            <span class="status-indicator-dot dot-green"></span>
+                            <span>State Machine Active & Deterministic</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- SECTION: Fusion Power Balance & 2D Sankey Energy Flow Diagram -->
+        <!-- SECTION 3: Fusion Power Balance & 2D Sankey Energy Flow Diagram -->
         <section id="power-balance" class="tab-pane">
             <div class="section-header">
                 <h2>⚛️ 2D Interactive Fusion Power Plant & Sankey Energy Flow Simulator</h2>
-                <p class="section-desc">Modeled after <a href="https://www.fusionenergybase.com/fusion-power-plant-simulator" target="_blank">Fusion Energy Base Power Plant Simulator</a>. Analyze recirculating power flows, thermal-to-electric conversion, and net grid electricity export for Steady-State Magnetic and Pulsed Inertial systems.</p>
+                <p class="section-desc">Modeled after <a href="https://www.fusionenergybase.com/fusion-power-plant-simulator" target="_blank">Fusion Energy Base Power Plant Simulator</a>. Analyze recirculating power flows, thermal-to-electric conversion, and net grid electricity export with published research paper benchmarks and real-time sliders.</p>
+            </div>
+
+            <!-- Published Research Paper Presets Bar -->
+            <div class="card glass-card research-presets-wrapper">
+                <div class="presets-header">
+                    <span class="ctrl-heading">📚 PUBLISHED RESEARCH PAPER PRESETS:</span>
+                    <span class="presets-sub">Select benchmark experimental configurations directly from peer-reviewed literature</span>
+                </div>
+                <div class="research-presets-grid">
+                    <button class="preset-card-btn active" data-paper-preset="skhy_qi" id="preset-skhy">
+                        <div class="preset-name">SKHY Commercial QI Stellarator</div>
+                        <div class="preset-citation">SKHY Baseline Design (2026)</div>
+                        <div class="preset-badge">Q=10.5 • Steady-State (+58 MW)</div>
+                    </button>
+                    <button class="preset-card-btn" data-paper-preset="jet_dt" id="preset-jet">
+                        <div class="preset-name">JET D-T Fusion Record (1997)</div>
+                        <div class="preset-citation">Keilhacker et al., Nucl. Fusion 39, 209</div>
+                        <div class="preset-badge">Q=0.67 • Historic Milestone</div>
+                    </button>
+                    <button class="preset-card-btn" data-paper-preset="iter_baseline" id="preset-iter">
+                        <div class="preset-name">ITER Baseline Design Target</div>
+                        <div class="preset-citation">ITER Physics Basis, Nucl. Fusion 39, 2137</div>
+                        <div class="preset-badge">Q=10.0 • 500 MW Fusion</div>
+                    </button>
+                    <button class="preset-card-btn" data-paper-preset="sparc_cfs" id="preset-sparc">
+                        <div class="preset-name">SPARC High-Field Tokamak (CFS)</div>
+                        <div class="preset-citation">Creely et al., J. Plasma Phys. 86 (2020)</div>
+                        <div class="preset-badge">Q=11.2 • Compact HTS Core</div>
+                    </button>
+                    <button class="preset-card-btn" data-paper-preset="nif_ignition" id="preset-nif">
+                        <div class="preset-name">NIF Laser Target Ignition (2022/23)</div>
+                        <div class="preset-citation">Abu-Shawareb et al., PRL 132, 065102</div>
+                        <div class="preset-badge">G=1.89 • 3.88 MJ Yield</div>
+                    </button>
+                    <button class="preset-card-btn" data-paper-preset="ife_plant" id="preset-ife">
+                        <div class="preset-name">IFE Commercial Power Plant</div>
+                        <div class="preset-citation">Meier et al., Laser & Part. Beams 32, 281</div>
+                        <div class="preset-badge">G=85.0 • 5 Hz (+263 MW)</div>
+                    </button>
+                    <button class="preset-card-btn" data-paper-preset="w7x_record" id="preset-w7x">
+                        <div class="preset-name">Wendelstein 7-X Triple Product</div>
+                        <div class="preset-citation">Wolf et al., Phys. Plasmas 26, 082504</div>
+                        <div class="preset-badge">nτT=6.5e19 • Optimized QI Flattop</div>
+                    </button>
+                </div>
             </div>
 
             <!-- Top Regime & Fuel Bar -->
@@ -701,7 +764,97 @@ stateDiagram-v2
             </div>
         </section>
 
-        <!-- SECTION 2: Purdue 6-Tier Architecture Explorer -->
+        <!-- SECTION 4: Interactive Magnet Quench & FOAS Acoustic Simulator -->
+        <section id="interactive-sim" class="tab-pane">
+            <div class="section-header">
+                <h2>⚡ Interactive REBCO Magnet Quench & FOAS Acoustic Simulator</h2>
+                <p class="section-desc">Adjust temperature, acoustic emission strain frequency, and NZPV to observe real-time MTCA.4 microsecond interlocks.</p>
+            </div>
+
+            <div class="simulator-grid">
+                <!-- Controls Card -->
+                <div class="card glass-card controls-card">
+                    <h3>Sensor Parameter Controls</h3>
+                    
+                    <div class="control-group">
+                        <label for="temp-slider">
+                            Localized REBCO Temperature (K)
+                            <span class="val-badge" id="temp-val">20.0 K</span>
+                        </label>
+                        <input type="range" id="temp-slider" min="10" max="110" value="20" step="0.5">
+                        <div class="slider-labels">
+                            <span>20K (Cryo)</span>
+                            <span class="warning-mark">70K (Warning)</span>
+                            <span class="critical-mark">90K (Quench T_c)</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="foas-slider">
+                            FOAS Acoustic Strain Frequency (Hz)
+                            <span class="val-badge" id="foas-val">1,200 Hz</span>
+                        </label>
+                        <input type="range" id="foas-slider" min="100" max="40000" value="1200" step="100">
+                        <div class="slider-labels">
+                            <span>100 Hz (Ambient)</span>
+                            <span class="critical-mark">25,000 Hz (Stress Burst Threshold)</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="cap-slider">
+                            Capacitance Shift Rate dC/dt (pF/s)
+                            <span class="val-badge" id="cap-val">0.2 pF/s</span>
+                        </label>
+                        <input type="range" id="cap-slider" min="0" max="50" value="0.2" step="0.1">
+                    </div>
+
+                    <div class="preset-buttons">
+                        <button class="btn btn-secondary" id="btn-preset-nominal">Nominal Cryo Preset</button>
+                        <button class="btn btn-danger" id="btn-preset-quench">Trigger REBCO Quench Anomaly</button>
+                    </div>
+                </div>
+
+                <!-- Live Interlock Gauge & Status -->
+                <div class="card glass-card status-card">
+                    <h3>Level 1 MTCA.4 Edge Safety Kernel Output</h3>
+                    
+                    <div class="status-indicator-box" id="status-box">
+                        <div class="status-dot green-pulse" id="status-dot"></div>
+                        <div class="status-info">
+                            <div class="status-title" id="status-title">SYSTEM STATE: NOMINAL</div>
+                            <div class="status-sub" id="status-sub">Superconducting state active. Zero resistance.</div>
+                        </div>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <span class="metric-label">Calculated NZPV</span>
+                            <span class="metric-value" id="nzpv-val">0.0000 m/s</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Interlock Latency</span>
+                            <span class="metric-value highlight-cyan" id="latency-val">21.4 μs</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">FOAS Acoustic Burst</span>
+                            <span class="metric-value" id="acoustic-status">Normal (<25 kHz)</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Breaker Actuator</span>
+                            <span class="metric-value" id="breaker-status">CLOSED (Energized)</span>
+                        </div>
+                    </div>
+
+                    <div class="oscilloscope-box">
+                        <div class="canvas-header">Live Sensor Waveform & Interlock Signal</div>
+                        <canvas id="waveform-canvas" width="450" height="120"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: Purdue 6-Tier Architecture Explorer -->
         <section id="purdue-explorer" class="tab-pane">
             <div class="section-header">
                 <h2>🏛 Purdue 6-Tier Reference Model & IEC 62443 Conduits</h2>
@@ -723,7 +876,7 @@ stateDiagram-v2
                         <div class="level-badge">LEVEL 4</div>
                         <div class="level-content">
                             <h4>Plant Management & Digital Twin Data Lake</h4>
-                            <p>PyTorch PINN Surrogate Engine & HDF5 Persistence (`tami_data_lake.h5`)</p>
+                            <p>PyTorch Multi-Reactor Surrogate Engine & HDF5 Persistence (`tami_data_lake.h5`)</p>
                         </div>
                     </div>
 
@@ -767,122 +920,6 @@ stateDiagram-v2
                         <p>The Purdue Model organizes complex industrial plants into 6 isolated security zones connected by strict conduits. Click any layer on the left to see its implementation in this repository.</p>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <!-- SECTION 3: Three.js 3D Multi-Reactor Digital Twin -->
-        <section id="pinn-twin" class="tab-pane">
-            <div class="section-header">
-                <h2>🌐 Three.js WebGL 3D Fusion Digital Twin & Visual FX Studio</h2>
-                <p class="section-desc">Interactive 3D real-time simulation of magnetic coil geometries, plasma equilibrium flux surfaces, laser beam drivers, and physical failure modes across Stellarators, Tokamaks, and ICF.</p>
-            </div>
-
-            <div class="digital-twin-grid-3d">
-                <!-- 3D Viewport Card -->
-                <div class="card glass-card canvas-3d-viewport-card">
-                    <div class="canvas-header-3d">
-                        <div class="canvas-title-group">
-                            <span class="active-reactor-3d-title" id="canvas-reactor-title">3D TWIN: QI MODULAR STELLARATOR</span>
-                            <span class="active-mode-3d-subtitle" id="canvas-mode-subtitle">Mode: Steady-State Nominal Confinement</span>
-                        </div>
-                        <div class="viewport-status-pills">
-                            <span class="live-tag" id="webgl-fps-tag">60 FPS WEBGL</span>
-                            <span class="live-tag highlight-cyan">ORBIT CONTROLS ACTIVE</span>
-                        </div>
-                    </div>
-
-                    <!-- 3D Viewport Container -->
-                    <div class="threejs-container" id="threejs-container">
-                        <!-- Floating Failure Anomaly Banner -->
-                        <div class="threejs-alert-banner" id="threejs-alert-banner" style="display: none;">
-                            <span class="alert-icon">⚠️</span>
-                            <span class="alert-text" id="threejs-alert-text">ANOMALY DETECTED: MAJOR DISRUPTION / CURRENT QUENCH</span>
-                        </div>
-
-                        <!-- Camera Preset Toolbar -->
-                        <div class="threejs-camera-hud">
-                            <span class="hud-label">CAMERA:</span>
-                            <button class="hud-btn active" data-cam="perspective" id="btn-cam-persp">Perspective</button>
-                            <button class="hud-btn" data-cam="top" id="btn-cam-top">Top View</button>
-                            <button class="hud-btn" data-cam="front" id="btn-cam-front">Front</button>
-                            <button class="hud-btn" data-cam="iso" id="btn-cam-iso">Isometric</button>
-                            <button class="hud-btn" data-cam="reset" id="btn-cam-reset">Reset</button>
-                        </div>
-
-                        <!-- Layer Visibility Toggles -->
-                        <div class="threejs-layers-hud">
-                            <span class="hud-label">LAYERS:</span>
-                            <label class="layer-checkbox">
-                                <input type="checkbox" id="layer-coils" checked>
-                                <span class="layer-name" id="layer-coils-label">Coils / Laser Beams</span>
-                            </label>
-                            <label class="layer-checkbox">
-                                <input type="checkbox" id="layer-plasma" checked>
-                                <span class="layer-name" id="layer-plasma-label">Plasma / Target</span>
-                            </label>
-                            <label class="layer-checkbox">
-                                <input type="checkbox" id="layer-divertor" checked>
-                                <span class="layer-name" id="layer-divertor-label">Divertor / Chamber</span>
-                            </label>
-                            <label class="layer-checkbox">
-                                <input type="checkbox" id="layer-heat" checked>
-                                <span class="layer-name">Thermal Heatmap</span>
-                            </label>
-                        </div>
-
-                        <!-- Interactive Instructions Badge -->
-                        <div class="threejs-hint-badge">
-                            🖱️ Left-Click: Rotate • Right-Click: Pan • Scroll: Zoom
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3D Physics Telemetry Card -->
-                <div class="card glass-card twin-stats-card">
-                    <div class="twin-stats-header">
-                        <h3>Physics Telemetry HUD</h3>
-                        <span class="subsystem-badge" id="twin-topology-badge">QI-HTS</span>
-                    </div>
-
-                    <div class="twin-metrics-container" id="twin-metrics-container">
-                        <div class="stat-item">
-                            <span class="stat-name" id="stat-1-name">Toroidal Beta ($\beta$)</span>
-                            <span class="stat-val highlight-gold" id="stat-1-val">4.25%</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-name" id="stat-2-name">Magnetic Axis Shift</span>
-                            <span class="stat-val" id="stat-2-val">+1.82 mm</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-name" id="stat-3-name">Peak Magnet Stress</span>
-                            <span class="stat-val" id="stat-3-val">142.5 MPa</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-name" id="stat-4-name">PINN Residual Loss</span>
-                            <span class="stat-val highlight-green" id="stat-4-val">0.00124</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-name" id="stat-5-name">Equilibrium Status</span>
-                            <span class="stat-val highlight-green" id="stat-5-val">CONVERGED</span>
-                        </div>
-                    </div>
-
-                    <div class="info-box-pinn" id="twin-info-box">
-                        <p id="twin-physics-info"><strong>Quasi-Isodynamic Optimization:</strong> Modular non-planar coils produce omnigenous magnetic surfaces with zero bounce-averaged radial drift, eliminating 1/nu ripple losses while remaining intrinsically disruption-free.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECTION 4: Beginner Guide & Markdown Diagrams -->
-        <section id="guide-doc" class="tab-pane">
-            <div class="section-header tutorial-section-header">
-                <h2>📖 Beginner's Tutorial & Fusion Physics Guide</h2>
-                <p class="section-desc">Step-by-step breakdown of fusion physics, magnet quench, and TAMI software architecture with LaTeX mathematics and Mermaid diagrams.</p>
-            </div>
-
-            <div class="tutorial-white-container" id="markdown-viewer">
-                <div class="loading-spinner">Loading tutorial content, typesetting LaTeX math, and rendering Mermaid diagrams...</div>
             </div>
         </section>
 
