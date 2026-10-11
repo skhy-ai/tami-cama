@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     init2DSankeySimulator();
     initPurdueInspector();
     init3DMultiReactorStudio();
+    initSyntheticCockpit();
     initMarkdownTutorial();
 });
 
@@ -175,6 +176,7 @@ function setOperationalMode(modeId) {
     } catch (e) {}
 
     updateSubsystemUI();
+    updateDynamicStateMachine();
 }
 
 /* ========================================================================== */
@@ -197,10 +199,12 @@ function initTabNavigation() {
 
             if (targetTab === 'guide-doc') {
                 renderMermaidDiagrams();
+                renderMathFormulas();
             } else if (targetTab === 'power-balance') {
                 renderSankeyDiagram();
             } else if (targetTab === 'digital-twin-studio' || targetTab === 'pinn-twin' || targetTab === 'subsystems-twin') {
                 onWindowResize3D();
+                updateDynamicStateMachine();
             }
         });
     });
@@ -349,9 +353,251 @@ function renderWaveform(freqHz, isQuench) {
 }
 
 /* ========================================================================== */
+/* 2b. Live Synthetic Ingestion Cockpit & Adaptive Precursor Waveforms        */
+/* ========================================================================== */
+let waveBuffer1 = Array(45).fill(0);
+let waveBuffer2 = Array(45).fill(0);
+let waveBuffer3 = Array(45).fill(0);
+let seqCounter = 10482;
+let streamFreq = 10;
+let lastTripTime = 0;
+let tripsLog = [];
+let isTimelineOpen = false;
+
+function initSyntheticCockpit() {
+    // Frequency buttons
+    document.querySelectorAll('.freq-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            streamFreq = parseInt(btn.getAttribute('data-freq') || '10', 10);
+            const rateEl = document.getElementById('cockpit-packet-rate');
+            if (rateEl) rateEl.textContent = `RATE: ${streamFreq}.0 Hz`;
+        });
+    });
+
+    // Inject Anomaly Button
+    const injectBtn = document.getElementById('btn-inject-anomaly');
+    if (injectBtn) {
+        injectBtn.addEventListener('click', () => {
+            let anomalyMode = 'MODE_HTS_COIL_HOTSPOT_QUENCH';
+            if (activeReactor === 'REACTOR_TOKAMAK') anomalyMode = 'MODE_TOKAMAK_MAJOR_DISRUPTION';
+            else if (activeReactor === 'REACTOR_ICF') anomalyMode = 'MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY';
+            setOperationalMode(anomalyMode);
+        });
+    }
+
+    // Toggle Timeline Button
+    const toggleBtn = document.getElementById('btn-toggle-timeline');
+    const timelineEl = document.getElementById('cockpit-event-timeline');
+    const toggleIcon = document.getElementById('timeline-toggle-icon');
+    if (toggleBtn && timelineEl) {
+        toggleBtn.addEventListener('click', () => {
+            isTimelineOpen = !isTimelineOpen;
+            timelineEl.style.display = isTimelineOpen ? 'block' : 'none';
+            if (toggleIcon) toggleIcon.textContent = isTimelineOpen ? '▲' : '▼';
+        });
+    }
+
+    // Clear Timeline Button
+    const clearBtn = document.getElementById('btn-clear-timeline');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            tripsLog = [];
+            renderTimelineEntries();
+        });
+    }
+}
+
+function updateAdaptiveWaveforms(val1, val2, val3, str1, str2, str3) {
+    seqCounter += Math.floor(streamFreq / 2) || 1;
+    const seqEl = document.getElementById('cockpit-seq-counter');
+    if (seqEl) seqEl.textContent = `SEQ #${seqCounter.toLocaleString()}`;
+
+    // Topology specific channel titles & trip limits
+    let t1, t2, t3, thresh1, thresh2, thresh3, unit1, unit2, unit3;
+
+    if (activeReactor === 'REACTOR_TOKAMAK') {
+        t1 = 'Channel 1: Inductive Loop Voltage (V_loop)';
+        t2 = 'Channel 2: Locked-Mode Perturbation (dB/dt)';
+        t3 = 'Channel 3: Divertor Peak Heat Flux';
+        thresh1 = 100.0; thresh2 = 50.0; thresh3 = 10.0;
+        unit1 = 'Central Solenoid Induced'; unit2 = 'Pick-up Mirnov Coils'; unit3 = 'Tungsten Target Plate';
+    } else if (activeReactor === 'REACTOR_ICF') {
+        t1 = 'Channel 1: Laser Pulse Timing Jitter';
+        t2 = 'Channel 2: Pellet Injection Displacement';
+        t3 = 'Channel 3: Rayleigh-Taylor Mix RMS';
+        thresh1 = 35.0; thresh2 = 40.0; thresh3 = 3.0;
+        unit1 = 'Optical Delay Line (ps)'; unit2 = 'Target Chamber Offset (µm)'; unit3 = 'Hotspot Instability (%)';
+    } else {
+        t1 = 'Channel 1: FOAS Acoustic Emission';
+        t2 = 'Channel 2: Capacitance Shift Rate (dC/dt)';
+        t3 = 'Channel 3: Localized Hotspot Temp';
+        thresh1 = 25.0; thresh2 = 15.0; thresh3 = 92.0;
+        unit1 = 'Ultrasonic Acoustic (dB)'; unit2 = 'Stray Dielectric (pF/s)'; unit3 = 'REBCO HTS Critical (K)';
+    }
+
+    setEl('wave-1-title', t1);
+    setEl('wave-2-title', t2);
+    setEl('wave-3-title', t3);
+    setEl('wave-1-val', str1);
+    setEl('wave-2-val', str2);
+    setEl('wave-3-val', str3);
+    setEl('wave-1-thresh', `Trip Threshold: > ${thresh1.toFixed(1)}`);
+    setEl('wave-2-thresh', `Trip Threshold: > ${thresh2.toFixed(1)}`);
+    setEl('wave-3-thresh', `Trip Threshold: > ${thresh3.toFixed(1)}`);
+    setEl('wave-1-unit', unit1);
+    setEl('wave-2-unit', unit2);
+    setEl('wave-3-unit', unit3);
+
+    // Push to ring buffers
+    waveBuffer1.push(val1); if (waveBuffer1.length > 45) waveBuffer1.shift();
+    waveBuffer2.push(val2); if (waveBuffer2.length > 45) waveBuffer2.shift();
+    waveBuffer3.push(val3); if (waveBuffer3.length > 45) waveBuffer3.shift();
+
+    // Render 3 sparkline canvases
+    drawSparkline('canvas-wave-1', waveBuffer1, thresh1, '#00F2FE');
+    drawSparkline('canvas-wave-2', waveBuffer2, thresh2, '#A855F7');
+    drawSparkline('canvas-wave-3', waveBuffer3, thresh3, '#F59E0B');
+
+    // Trip detection check
+    const isTripped = (val1 > thresh1) || (val2 > thresh2) || (val3 > thresh3);
+    const now = Date.now();
+    if (isTripped && (now - lastTripTime > 3500)) {
+        lastTripTime = now;
+        logInterlockTrip(val1, val2, val3, thresh1, thresh2, thresh3);
+    }
+}
+
+function drawSparkline(canvasId, buffer, threshold, baseColor) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Background grid lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.33); ctx.lineTo(w, h * 0.33);
+    ctx.moveTo(0, h * 0.66); ctx.lineTo(w, h * 0.66);
+    ctx.stroke();
+
+    // Scale calculation
+    const maxVal = Math.max(threshold * 1.35, Math.max(...buffer, 1.0));
+    const threshY = h - (threshold / maxVal) * (h - 8);
+
+    // Draw red threshold dashed line
+    ctx.strokeStyle = 'rgba(244, 63, 94, 0.65)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(0, threshY);
+    ctx.lineTo(w, threshY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw Waveform curve
+    const step = w / (buffer.length - 1);
+    ctx.beginPath();
+    buffer.forEach((v, idx) => {
+        const x = idx * step;
+        const y = h - (Math.max(0, v) / maxVal) * (h - 8);
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+
+    const isCurrentTripped = buffer[buffer.length - 1] > threshold;
+    ctx.strokeStyle = isCurrentTripped ? '#FF3366' : baseColor;
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = isCurrentTripped ? 10 : 4;
+    ctx.shadowColor = isCurrentTripped ? '#FF3366' : baseColor;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Fill area under curve
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, isCurrentTripped ? 'rgba(255, 51, 102, 0.25)' : 'rgba(0, 242, 254, 0.15)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+}
+
+function logInterlockTrip(v1, v2, v3, th1, th2, th3) {
+    const d = new Date();
+    const timeStr = d.toTimeString().split(' ')[0] + '.' + String(d.getMilliseconds()).padStart(3, '0');
+    let evt = 'INTERLOCK TRIP';
+    let valStr = '';
+    let act = 'Level 1 FPGA Triggered';
+
+    if (activeReactor === 'REACTOR_TOKAMAK') {
+        evt = 'MAJOR DISRUPTION PRECURSOR';
+        valStr = `Vloop=${v1.toFixed(1)}V, dB/dt=${v2.toFixed(1)}T/s`;
+        act = '<2 ms Shattered Pellet Injection (SPI) Neon Active';
+    } else if (activeReactor === 'REACTOR_ICF') {
+        evt = 'IMPLOSION ASYMMETRY TRIP';
+        valStr = `Jitter=${v1.toFixed(1)}ps, Offset=${v2.toFixed(1)}µm`;
+        act = '<50 µs Laser Interlock Abort to Calorimeter';
+    } else {
+        evt = 'HTS COIL QUENCH PRECURSOR';
+        valStr = `FOAS=${v1.toFixed(1)}dB, dC/dt=${v2.toFixed(1)}pF/s, T=${v3.toFixed(1)}K`;
+        act = '<22 µs Pyrotechnic Breaker Energy Dump Active';
+    }
+
+    tripsLog.unshift({
+        time: timeStr,
+        event: evt,
+        val: valStr,
+        action: act,
+        status: 'MITIGATED'
+    });
+
+    if (tripsLog.length > 20) tripsLog.pop();
+    renderTimelineEntries();
+}
+
+function renderTimelineEntries() {
+    const emptyNotice = document.getElementById('timeline-empty-notice');
+    const listEl = document.getElementById('timeline-list');
+    const badge = document.getElementById('timeline-trip-count');
+
+    if (badge) badge.textContent = `${tripsLog.length} Trips Logged`;
+
+    if (!listEl || !emptyNotice) return;
+
+    if (tripsLog.length === 0) {
+        emptyNotice.style.display = 'block';
+        listEl.style.display = 'none';
+        listEl.innerHTML = '';
+        return;
+    }
+
+    emptyNotice.style.display = 'none';
+    listEl.style.display = 'block';
+    listEl.innerHTML = tripsLog.map(t => `
+        <div class="timeline-entry">
+            <span class="tl-time">${t.time}</span>
+            <span class="tl-event">${t.event}</span>
+            <span class="tl-val">${t.val}</span>
+            <span class="tl-action">${t.action}</span>
+            <span class="tl-status">[${t.status}]</span>
+        </div>
+    `).join('');
+}
+
+/* ========================================================================== */
 /* 3. Subsystems Digital Twin & Live Telemetry Poller                        */
 /* ========================================================================== */
 function initSubsystemsTwin() {
+    updateDynamicStateMachine();
     setInterval(() => {
         fetch('/api/v1/subsystems/latest')
             .then(res => {
@@ -521,6 +767,34 @@ function updateSubsystemUI() {
 
     renderSubsystemValues(sub1, sub2, sub3, sub4, sub5);
     update3DPhysicsStats(sub1, sub2, sub3, sub4, sub5);
+
+    // Calculate adaptive waveform values
+    let w1 = 3.2, w2 = 0.12, w3 = 20.0;
+    let s1 = '3.2 dB', s2 = '+0.12 pF/s', s3 = '20.0 K';
+    if (reactor === 'REACTOR_TOKAMAK') {
+        w1 = (mode === 'MODE_TOKAMAK_MAJOR_DISRUPTION') ? 185.0 : (0.12 + Math.random() * 0.05);
+        w2 = (mode === 'MODE_TOKAMAK_MAJOR_DISRUPTION') ? 68.4 : ((mode === 'MODE_TOKAMAK_2_1_NTM_ISLAND') ? 24.2 : 1.2);
+        w3 = parseFloat(sub3.flux) || 4.8;
+        s1 = `${w1.toFixed(1)} V`;
+        s2 = `${w2.toFixed(1)} T/s`;
+        s3 = `${w3.toFixed(1)} MW/m²`;
+    } else if (reactor === 'REACTOR_ICF') {
+        w1 = mode.includes('JITTER') ? 42.5 : (6.2 + Math.random() * 2.0);
+        w2 = mode.includes('MISS') ? 52.0 : (6.8 + Math.random() * 1.5);
+        w3 = mode.includes('TAYLOR') ? 4.8 : (0.45 + Math.random() * 0.1);
+        s1 = `${w1.toFixed(1)} ps`;
+        s2 = `${w2.toFixed(1)} µm`;
+        s3 = `${w3.toFixed(2)}%`;
+    } else {
+        const isQ = (mode === 'MODE_HTS_COIL_HOTSPOT_QUENCH');
+        w1 = isQ ? (32.4 + Math.random() * 4.0) : (3.2 + Math.random() * 0.4);
+        w2 = isQ ? (22.8 + Math.random() * 3.0) : (0.12 + Math.random() * 0.05);
+        w3 = isQ ? 98.5 : 20.2;
+        s1 = `${w1.toFixed(1)} dB`;
+        s2 = `${w2.toFixed(2)} pF/s`;
+        s3 = `${w3.toFixed(1)} K`;
+    }
+    updateAdaptiveWaveforms(w1, w2, w3, s1, s2, s3);
 }
 
 function applyTelemetryDataToUI(data) {
@@ -583,6 +857,34 @@ function applyTelemetryDataToUI(data) {
 
     renderSubsystemValues(sub1, sub2, sub3, sub4, sub5);
     update3DPhysicsStats(sub1, sub2, sub3, sub4, sub5);
+    updateDynamicStateMachine();
+
+    // Pass live incoming telemetry into adaptive precursor waveforms
+    let liveW1 = 3.2, liveW2 = 0.12, liveW3 = 20.0;
+    let liveS1 = '3.2 dB', liveS2 = '+0.12 pF/s', liveS3 = '20.0 K';
+    if (activeReactor === 'REACTOR_TOKAMAK' && data.tokamak_core) {
+        liveW1 = data.tokamak_core.loop_voltage_v || 0.12;
+        liveW2 = data.tokamak_core.locked_mode_amplitude_gauss || 1.2;
+        liveW3 = data.divertor.peak_heat_flux_mw_per_m2 || 4.8;
+        liveS1 = `${liveW1.toFixed(1)} V`;
+        liveS2 = `${liveW2.toFixed(1)} T/s`;
+        liveS3 = `${liveW3.toFixed(1)} MW/m²`;
+    } else if (activeReactor === 'REACTOR_ICF' && data.icf_core) {
+        liveW1 = data.icf_core.laser_jitter_ps || 6.5;
+        liveW2 = 6.2;
+        liveW3 = data.icf_core.rayleigh_taylor_growth_factor || 0.45;
+        liveS1 = `${liveW1.toFixed(1)} ps`;
+        liveS2 = `6.2 µm`;
+        liveS3 = `${liveW3.toFixed(2)}%`;
+    } else {
+        liveW1 = data.coil_cryo.quench_warning ? 32.5 : (data.coil_cryo.foas_acoustic_db || 3.2);
+        liveW2 = data.coil_cryo.quench_warning ? 22.4 : 0.12;
+        liveW3 = data.coil_cryo.coil_temperature_k || 20.0;
+        liveS1 = `${liveW1.toFixed(1)} dB`;
+        liveS2 = `${liveW2.toFixed(2)} pF/s`;
+        liveS3 = `${liveW3.toFixed(1)} K`;
+    }
+    updateAdaptiveWaveforms(liveW1, liveW2, liveW3, liveS1, liveS2, liveS3);
 }
 
 function renderSubsystemValues(sub1, sub2, sub3, sub4, sub5) {
@@ -653,6 +955,255 @@ function setBar(id, pct, bgClass) {
 function setDot(id, dotClass) {
     const el = document.getElementById(id);
     if (el) el.className = `status-indicator-dot ${dotClass}`;
+}
+
+/* ========================================================================== */
+/* Dynamic State Machine Engine (Coupled Multi-Physics Transitions)           */
+/* ========================================================================== */
+const STATE_MACHINE_CONFIG = {
+    'REACTOR_QI_STELLARATOR': {
+        badge: 'QI-HTS',
+        states: [
+            {
+                id: 'MODE_STARTUP_RAMP',
+                name: '1. Startup Ignition',
+                icon: '🚀',
+                type: 'nominal',
+                trigger: 'Coils 0->5.5T | ECRH 140GHz Break',
+                action: 'Purdue L2 Magnetic Energization Ramp',
+                statusPill: 'RAMP UP'
+            },
+            {
+                id: 'MODE_STEADY_STATE_NOMINAL',
+                name: '2. Steady-State Flattop',
+                icon: '⚡',
+                type: 'nominal',
+                trigger: 'Omnigenous Cage | Q_sci=10.5 | P_net=+58MW',
+                action: 'Nominal High-Confinement Export',
+                statusPill: 'STEADY STATE'
+            },
+            {
+                id: 'MODE_PELLET_REFUELING_BURST',
+                name: '3. Cryo Pellet Refuel',
+                icon: '🧊',
+                type: 'nominal',
+                trigger: 'D-T Ice Pellet 1.2 km/s | Density Spike',
+                action: 'Core Alpha Heating Maintenance',
+                statusPill: 'REFUELING'
+            },
+            {
+                id: 'MODE_DIVERTOR_DETACHMENT_FAULT',
+                name: '4. Divertor Detachment Fault',
+                icon: '🔥',
+                type: 'anomaly',
+                trigger: 'Strike-Point Heat >16.8 MW/m²',
+                action: 'Level 2 Neon/Argon Gas Puff Throttle',
+                statusPill: 'HEAT OVERLOAD'
+            },
+            {
+                id: 'MODE_CORE_TUNGSTEN_COLLAPSE',
+                name: '5. Tungsten Impurity Collapse',
+                icon: '🌪️',
+                type: 'anomaly',
+                trigger: 'Radiation Loss Prad > 35 MW',
+                action: 'ECRH Central Heating Flush',
+                statusPill: 'IMPURITY SURGE'
+            },
+            {
+                id: 'MODE_HTS_COIL_HOTSPOT_QUENCH',
+                name: '6. HTS Hotspot Quench',
+                icon: '🚨',
+                type: 'critical',
+                trigger: 'FOAS Acoustic >25kHz | dC/dt >15 pF/s',
+                action: 'Level 1 Pyro-Breaker Dump <22µs',
+                statusPill: 'QUENCH INTERLOCK'
+            }
+        ]
+    },
+    'REACTOR_TOKAMAK': {
+        badge: 'TOKAMAK-CS',
+        states: [
+            {
+                id: 'MODE_TOKAMAK_NOMINAL_FLATTOP',
+                name: '1. Nominal Flattop Burn',
+                icon: '⚡',
+                type: 'nominal',
+                trigger: 'Ip=15 MA | q95=3.25 | H98y2=1.05',
+                action: 'Inductive Current Sustainment',
+                statusPill: 'FLATTOP BURN'
+            },
+            {
+                id: 'MODE_TOKAMAK_2_1_NTM_ISLAND',
+                name: '2. 2/1 NTM Tearing Island',
+                icon: '🌀',
+                type: 'anomaly',
+                trigger: 'Magnetic Island w > 4.5 cm | Confinement -40%',
+                action: 'Steerable ECCD Current Drive Healing',
+                statusPill: 'NTM ACTIVE'
+            },
+            {
+                id: 'MODE_TOKAMAK_UNMITIGATED_ELM_BURST',
+                name: '3. Type-I ELM Burst',
+                icon: '💥',
+                type: 'anomaly',
+                trigger: 'Edge Pedestal Collapse | Heat 16.4 MW/m²',
+                action: 'Resonant Magnetic Perturbation (RMP)',
+                statusPill: 'ELM CRASH'
+            },
+            {
+                id: 'MODE_TOKAMAK_VERTICAL_DISPLACEMENT_EVENT',
+                name: '4. Vertical Drift (VDE)',
+                icon: '↕️',
+                type: 'anomaly',
+                trigger: 'Delta-Z Drift >40mm into Vessel Wall',
+                action: 'Fast In-Vessel Stabilizing Coil Kick',
+                statusPill: 'VERTICAL DRIFT'
+            },
+            {
+                id: 'MODE_TOKAMAK_MAJOR_DISRUPTION',
+                name: '5. Major Disruption',
+                icon: '⚡',
+                type: 'critical',
+                trigger: 'Thermal Quench (<1ms) | Vloop Spike 185V',
+                action: 'Shattered Pellet Injection (SPI) Neon',
+                statusPill: 'DISRUPTION'
+            },
+            {
+                id: 'MODE_TOKAMAK_RUNAWAY_ELECTRON_AVALANCHE',
+                name: '6. Runaway Electron Beam',
+                icon: '☢️',
+                type: 'critical',
+                trigger: 'Relativistic 3.8 MA Beam | Gamma Burst',
+                action: 'Massive Deuterium Injection (MGI)',
+                statusPill: 'RUNAWAY BEAM'
+            }
+        ]
+    },
+    'REACTOR_ICF': {
+        badge: 'ICF-LASER',
+        states: [
+            {
+                id: 'MODE_ICF_NOMINAL_REPETITION_PULSE',
+                name: '1. 5 Hz Nominal Rep Pulse',
+                icon: '🎯',
+                type: 'nominal',
+                trigger: '2.15 MJ Laser | Target Gain G=85 | Pfus=914MW',
+                action: 'Continuous 5 Hz Microimplosion Cycle',
+                statusPill: '5 HZ PULSE'
+            },
+            {
+                id: 'MODE_ICF_CHAMBER_CLEARING_CHOKE',
+                name: '2. Chamber Vapor Choke',
+                icon: '🌫️',
+                type: 'anomaly',
+                trigger: 'Residual Metal Vapor > 0.15 Pa',
+                action: 'Pulse Delay +100ms for Condensation',
+                statusPill: 'CLEARING PAUSE'
+            },
+            {
+                id: 'MODE_ICF_FINAL_OPTICS_DEBRIS_DAMAGE',
+                name: '3. Final Optics Debris Damage',
+                icon: '🛡️',
+                type: 'anomaly',
+                trigger: 'Debris Shrapnel | Transmission < 80%',
+                action: 'Automated Debris Cassette Advance',
+                statusPill: 'DEBRIS FAULT'
+            },
+            {
+                id: 'MODE_ICF_LASER_TIMING_JITTER',
+                name: '4. Laser Timing Jitter',
+                icon: '⏱️',
+                type: 'anomaly',
+                trigger: 'Beam Arrival Jitter > 35 ps Out of Sync',
+                action: 'Piezo Optical Delay Line Calibration',
+                statusPill: 'TIMING JITTER'
+            },
+            {
+                id: 'MODE_ICF_TARGET_TRACKING_INJECTION_MISS',
+                name: '5. Target Injection Miss',
+                icon: '❌',
+                type: 'critical',
+                trigger: 'Pellet Offset >40µm off Target Chamber Center',
+                action: 'Fast Trigger Abort: Beam Dump Calorimeter',
+                statusPill: 'TARGET MISSED'
+            },
+            {
+                id: 'MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY',
+                name: '6. Rayleigh-Taylor Asymmetry',
+                icon: '🌊',
+                type: 'critical',
+                trigger: 'Ablator Mix Spike into Core | Yield Drop 90%',
+                action: 'Laser Pulse Shaping Fuel Adiabat Adjust',
+                statusPill: 'RT INSTABILITY'
+            }
+        ]
+    }
+};
+
+function updateDynamicStateMachine() {
+    const config = STATE_MACHINE_CONFIG[activeReactor] || STATE_MACHINE_CONFIG['REACTOR_QI_STELLARATOR'];
+    const badgeEl = document.getElementById('sm-badge-topology');
+    if (badgeEl) badgeEl.textContent = config.badge;
+
+    const bannerEl = document.getElementById('sm-active-banner');
+    const nameEl = document.getElementById('sm-active-name');
+    const pillEl = document.getElementById('sm-status-pill');
+    const dotEl = document.getElementById('sm-pulse-dot');
+    const triggerEl = document.getElementById('sm-interlock-trigger');
+    const actionEl = document.getElementById('sm-interlock-action');
+    const footerDot = document.getElementById('sm-footer-dot');
+    const footerText = document.getElementById('sm-footer-text');
+
+    const activeStateObj = config.states.find(s => s.id === activeMode) || config.states[1];
+
+    if (nameEl) nameEl.textContent = activeMode;
+    if (pillEl) {
+        pillEl.textContent = activeStateObj.statusPill;
+        pillEl.className = `sm-status-pill ${activeStateObj.type === 'critical' ? 'pill-critical' : (activeStateObj.type === 'anomaly' ? 'pill-warning' : '')}`;
+    }
+    if (dotEl) {
+        dotEl.className = `sm-pulse-dot ${activeStateObj.type === 'critical' ? 'dot-critical' : (activeStateObj.type === 'anomaly' ? 'dot-warning' : '')}`;
+    }
+    if (bannerEl) {
+        bannerEl.className = `sm-active-banner ${activeStateObj.type === 'critical' ? 'is-critical' : (activeStateObj.type === 'anomaly' ? 'is-anomaly' : '')}`;
+    }
+
+    if (triggerEl) triggerEl.textContent = activeStateObj.trigger;
+    if (actionEl) {
+        actionEl.textContent = activeStateObj.action;
+        actionEl.className = `sm-interlock-val ${activeStateObj.type === 'critical' ? 'highlight-red' : (activeStateObj.type === 'anomaly' ? 'highlight-gold' : 'highlight-green')}`;
+    }
+
+    if (footerDot) {
+        footerDot.className = `status-indicator-dot ${activeStateObj.type === 'critical' ? 'dot-red' : (activeStateObj.type === 'anomaly' ? 'dot-yellow' : 'dot-green')}`;
+    }
+    if (footerText) {
+        footerText.textContent = activeStateObj.type === 'critical' ? 'Level 1 Fast Interlock Triggered' : (activeStateObj.type === 'anomaly' ? 'Level 2 Mitigating Feedback Active' : 'State Machine Active & Deterministic');
+    }
+
+    const gridEl = document.getElementById('sm-states-grid');
+    if (!gridEl) return;
+    gridEl.innerHTML = '';
+
+    config.states.forEach(s => {
+        const btn = document.createElement('div');
+        const isActive = (s.id === activeMode);
+        btn.className = `sm-node-btn ${isActive ? 'active-node' : ''} ${s.type === 'critical' ? 'node-critical' : (s.type === 'anomaly' ? 'node-warning' : '')}`;
+        btn.innerHTML = `
+            <div class="sm-node-top">
+                <span class="sm-node-icon">${s.icon}</span>
+                <span class="sm-node-badge">${isActive ? 'ACTIVE' : s.type}</span>
+            </div>
+            <div class="sm-node-name">${s.name}</div>
+            <div class="sm-node-trigger">${s.trigger}</div>
+        `;
+        btn.addEventListener('click', () => {
+            isAutoCycling = false;
+            if (autoCycleTimer) clearInterval(autoCycleTimer);
+            setOperationalMode(s.id);
+        });
+        gridEl.appendChild(btn);
+    });
 }
 
 /* ========================================================================== */
@@ -2440,8 +2991,28 @@ function initMarkdownTutorial() {
 function renderMathFormulas() {
     if (!window.katex) return;
 
-    // Render display math cards
+    const root = document.getElementById('markdown-viewer') || document.body;
+
+    // 1. Try official KaTeX auto-render extension first
+    if (typeof window.renderMathInElement === 'function') {
+        try {
+            window.renderMathInElement(root, {
+                delimiters: [
+                    { left: '$$', right: '$$', display: true },
+                    { left: '$', right: '$', display: false }
+                ],
+                throwOnError: false,
+                ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"]
+            });
+            return;
+        } catch (e) {
+            console.warn("KaTeX auto-render notice:", e);
+        }
+    }
+
+    // 2. Render display math cards directly
     document.querySelectorAll('.math-card').forEach(el => {
+        if (el.getAttribute('data-math-rendered') === 'true') return;
         const raw = el.textContent.trim();
         const formula = raw.replace(/^\$\$/g, '').replace(/\$\$$/g, '').trim();
         try {
@@ -2449,14 +3020,15 @@ function renderMathFormulas() {
                 displayMode: true,
                 throwOnError: false
             });
+            el.setAttribute('data-math-rendered', 'true');
         } catch (e) {
             console.warn("KaTeX display render notice:", e);
         }
     });
 
-    // Render inline math
+    // 3. Render inline math safely
     const walker = document.createTreeWalker(
-        document.getElementById('markdown-viewer') || document.body,
+        root,
         NodeFilter.SHOW_TEXT,
         null,
         false

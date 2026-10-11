@@ -11,6 +11,7 @@
     <!-- KaTeX CSS & JS for LaTeX Math Rendering -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <!-- Marked for GFM Markdown Rendering -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <!-- Mermaid CDN for client-side diagram rendering -->
@@ -142,10 +143,10 @@
                         $$E = \Delta m \cdot c^2$$
                     </div>
                     <p>
-                        On Earth, the most promising fuel combination is <strong>Deuterium ($^2	ext{H}$)</strong> and <strong>Tritium ($^3	ext{H}$)</strong>, two isotopes of hydrogen:
+                        On Earth, the most promising fuel combination is <strong>Deuterium ($^2\text{H}$)</strong> and <strong>Tritium ($^3\text{H}$)</strong>, two isotopes of hydrogen:
                     </p>
                     <div class="math-card">
-                        $$	ext{Deuterium } (^2	ext{H}) + 	ext{Tritium } (^3	ext{H}) \longrightarrow 	ext{Helium-4 } (^4	ext{He}, 3.52	ext{ MeV}) + 	ext{Neutron } (	ext{n}, 14.06	ext{ MeV})$$
+                        $$\text{Deuterium } (^2\text{H}) + \text{Tritium } (^3\text{H}) \longrightarrow \text{Helium-4 } (^4\text{He}, 3.52\text{ MeV}) + \text{Neutron } (\text{n}, 14.06\text{ MeV})$$
                     </div>
                     <p>
                         Deuterium is abundant in seawater (one in every 6,500 hydrogen atoms in Earth's oceans is deuterium). Tritium can be bred directly inside the reactor using lithium blankets. Just one bathtub of water and the lithium from a laptop battery contains enough fusion fuel to power an average household for decades—with <strong>zero greenhouse gas emissions</strong> and <strong>no long-lived radioactive waste</strong>.
@@ -190,7 +191,7 @@ graph TD
 
                     <h3>2.2 Advanced Tokamaks</h3>
                     <p>
-                        A tokamak uses simpler, D-shaped coils to create a toroidal field, but achieves the necessary helical twist by driving a massive toroidal current ($I_p pprox 15	ext{ MA}$) directly through the plasma using a central transformer (the Central Solenoid).
+                        A tokamak uses simpler, D-shaped coils to create a toroidal field, but achieves the necessary helical twist by driving a massive toroidal current ($I_p \approx 15\text{ MA}$) directly through the plasma using a central transformer (the Central Solenoid).
                     </p>
                     <ul>
                         <li><strong>High Performance:</strong> Tokamaks achieve excellent confinement in compact volumes and hold the historical records for fusion power output (such as JET's 16.1 MW record in 1997).</li>
@@ -202,9 +203,9 @@ graph TD
                         Instead of holding plasma with magnets for seconds, Inertial Confinement Fusion compresses a microscopic frozen fuel droplet (the size of a peppercorn) using intense, converging laser pulses.
                     </p>
                     <ul>
-                        <li><strong>Rocket Ablation:</strong> Laser beams vaporize the outer capsule shell, rocketing outward and driving the inner fuel inward at over $350	ext{ km/s}$.</li>
-                        <li><strong>Extreme Density:</strong> The fuel is compressed to over $1,000	imes$ solid density, igniting a central thermonuclear spark before inertia allows the fuel to fly apart.</li>
-                        <li><strong>Pulsed Operation:</strong> Power plants operate by firing at a repetition rate of $5	ext{ to }10	ext{ shots per second}$ (5–10 Hz).</li>
+                        <li><strong>Rocket Ablation:</strong> Laser beams vaporize the outer capsule shell, rocketing outward and driving the inner fuel inward at over $350\text{ km/s}$.</li>
+                        <li><strong>Extreme Density:</strong> The fuel is compressed to over $1,000\times$ solid density, igniting a central thermonuclear spark before inertia allows the fuel to fly apart.</li>
+                        <li><strong>Pulsed Operation:</strong> Power plants operate by firing at a repetition rate of $5\text{ to }10\text{ shots per second}$ (5–10 Hz).</li>
                     </ul>
 
                     <h3>Comparative Topology Summary</h3>
@@ -227,14 +228,14 @@ graph TD
                                 </tr>
                                 <tr>
                                     <td><strong>Operational Regime</strong></td>
-                                    <td>Continuous Steady-State ($10^6	ext{ s}$)</td>
-                                    <td>Pulsed Inductive ($10^3	ext{ s}$)</td>
-                                    <td>High-Repetition Pulsed ($5	ext{--}10	ext{ Hz}$)</td>
+                                    <td>Continuous Steady-State ($10^6\text{ s}$)</td>
+                                    <td>Pulsed Inductive ($10^3\text{ s}$)</td>
+                                    <td>High-Repetition Pulsed ($5\text{--}10\text{ Hz}$)</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Internal Current ($I_p$)</strong></td>
-                                    <td>Zero ($I_{	ext{net}} pprox 0	ext{ kA}$)</td>
-                                    <td>High ($15	ext{--}20	ext{ MA}$)</td>
+                                    <td>Zero ($I_{\text{net}} \approx 0\text{ kA}$)</td>
+                                    <td>High ($15\text{--}20\text{ MA}$)</td>
                                     <td>Zero</td>
                                 </tr>
                                 <tr>
@@ -245,9 +246,9 @@ graph TD
                                 </tr>
                                 <tr>
                                     <td><strong>Typical Scientific Gain</strong></td>
-                                    <td>$Q_{	ext{sci}} pprox 10	ext{--}12$</td>
-                                    <td>$Q_{	ext{sci}} pprox 10	ext{--}15$</td>
-                                    <td>Target Gain $G pprox 80	ext{--}100$</td>
+                                    <td>$Q_{\text{sci}} \approx 10\text{--}12$</td>
+                                    <td>$Q_{\text{sci}} \approx 10\text{--}15$</td>
+                                    <td>Target Gain $G \approx 80\text{--}100$</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -260,22 +261,22 @@ graph TD
                 <section id="tut-lawson" class="tut-section">
                     <h2>3. Lawson Criteria & Scientific Gain ($Q$)</h2>
                     <p>
-                        In 1955, British physicist J.D. Lawson published a simple yet profound realization: for fusion to release more energy than it takes to heat the fuel, the product of <strong>density ($n$)</strong>, <strong>temperature ($T$)</strong>, and <strong>energy confinement time ($	au_E$)</strong> must exceed a critical threshold.
+                        In 1955, British physicist J.D. Lawson published a simple yet profound realization: for fusion to release more energy than it takes to heat the fuel, the product of <strong>density ($n$)</strong>, <strong>temperature ($T$)</strong>, and <strong>energy confinement time ($\tau_E$)</strong> must exceed a critical threshold.
                     </p>
                     <div class="math-card">
-                        $$n \cdot T \cdot 	au_E \ge 3 	imes 10^{21} 	ext{ keV}\cdot	ext{s}\cdot	ext{m}^{-3}$$
+                        $$n \cdot T \cdot \tau_E \ge 3 \times 10^{21} \text{ keV}\cdot\text{s}\cdot\text{m}^{-3}$$
                     </div>
                     <p>
                         This "Triple Product" demonstrates the beautiful duality of fusion:
                     </p>
                     <ul>
-                        <li><strong>Magnetic Confinement (Stellarators & Tokamaks):</strong> Uses moderate density ($n \sim 10^{20}	ext{ m}^{-3}$) and holds heat gently for several seconds ($	au_E \sim 2	ext{--}3	ext{ s}$).</li>
-                        <li><strong>Inertial Confinement (ICF):</strong> Uses ultra-high density ($n \sim 10^{26}	ext{ m}^{-3}$) for just a fraction of a billionth of a second ($	au_E \sim 0.1	ext{ ns}$).</li>
+                        <li><strong>Magnetic Confinement (Stellarators & Tokamaks):</strong> Uses moderate density ($n \sim 10^{20}\text{ m}^{-3}$) and holds heat gently for several seconds ($\tau_E \sim 2\text{--}3\text{ s}$).</li>
+                        <li><strong>Inertial Confinement (ICF):</strong> Uses ultra-high density ($n \sim 10^{26}\text{ m}^{-3}$) for just a fraction of a billionth of a second ($\tau_E \sim 0.1\text{ ns}$).</li>
                     </ul>
 
                     <h3>Understanding Gain ($Q$)</h3>
                     <ul>
-                        <li><strong>Scientific Gain ($Q_{	ext{sci}} = P_{	ext{fusion}} / P_{	ext{heating}}$):</strong> The ratio of fusion power generated to the heating power injected into the core.
+                        <li><strong>Scientific Gain ($Q_{\text{sci}} = P_{\text{fusion}} / P_{\text{heating}}$):</strong> The ratio of fusion power generated to the heating power injected into the core.
                             <ul>
                                 <li>$Q < 1.0$: Sub-breakeven. More heat is put in than fusion comes out.</li>
                                 <li>$Q = 1.0$: <strong>Scientific Breakeven</strong>. Fusion power equals injected power.</li>
@@ -292,7 +293,7 @@ graph TD
                 <section id="tut-power-balance" class="tut-section">
                     <h2>4. Power Plant Balance & 2D Sankey Simulator</h2>
                     <p>
-                        A common misconception is that achieving $Q_{	ext{sci}} = 1.0$ produces electricity for the power grid. As shown by research from Sam Wurzel and the team at <a href="https://www.fusionenergybase.com/fusion-power-plant-simulator" target="_blank">Fusion Energy Base</a>, an actual power plant must account for conversion efficiencies and recirculating electricity:
+                        A common misconception is that achieving $Q_{\text{sci}} = 1.0$ produces electricity for the power grid. As shown by research from Sam Wurzel and the team at <a href="https://www.fusionenergybase.com/fusion-power-plant-simulator" target="_blank">Fusion Energy Base</a>, an actual power plant must account for conversion efficiencies and recirculating electricity:
                     </p>
 
                     <div class="mermaid">
@@ -309,11 +310,11 @@ flowchart LR
 
                     <h3>The Physics Equations Behind the 2D Sankey Canvas</h3>
                     <ol>
-                        <li><strong>Total Thermal Energy:</strong> $P_{	ext{thermal}} = P_{	ext{fusion}} \cdot M + P_{	ext{injected}}$ (where $M pprox 1.15$ from exothermic neutron capture in lithium).</li>
-                        <li><strong>Gross Electric Generation:</strong> $P_{	ext{gross}} = P_{	ext{thermal}} \cdot \eta_{	ext{thermal}}$ (steam turbine or Brayton cycle, typically $35	ext{--}42\%$).</li>
-                        <li><strong>Recirculating Power:</strong> $P_{	ext{recirc}} = rac{P_{	ext{injected}}}{\eta_{	ext{driver}}} + P_{	ext{aux}}$ (wall-plug efficiency of heating/lasers and cryogenic coolers).</li>
-                        <li><strong>Net Grid Export:</strong> $P_{	ext{net}} = P_{	ext{gross}} - P_{	ext{recirc}}$. Only when $P_{	ext{net}} > 0$ does the plant generate clean electricity for homes and industry!</li>
-                        <li><strong>Engineering Gain:</strong> $Q_{	ext{eng}} = rac{P_{	ext{gross}}}{P_{	ext{recirc}}}$. Commercial plants target $Q_{	ext{eng}} \ge 2.5	ext{--}4.0$.</li>
+                        <li><strong>Total Thermal Energy:</strong> $P_{\text{thermal}} = P_{\text{fusion}} \cdot M + P_{\text{injected}}$ (where $M \approx 1.15$ from exothermic neutron capture in lithium).</li>
+                        <li><strong>Gross Electric Generation:</strong> $P_{\text{gross}} = P_{\text{thermal}} \cdot \eta_{\text{thermal}}$ (steam turbine or Brayton cycle, typically $35\text{--}42\%$).</li>
+                        <li><strong>Recirculating Power:</strong> $P_{\text{recirc}} = \frac{P_{\text{injected}}}{\eta_{\text{driver}}} + P_{\text{aux}}$ (wall-plug efficiency of heating/lasers and cryogenic coolers).</li>
+                        <li><strong>Net Grid Export:</strong> $P_{\text{net}} = P_{\text{gross}} - P_{\text{recirc}}$. Only when $P_{\text{net}} > 0$ does the plant generate clean electricity for homes and industry!</li>
+                        <li><strong>Engineering Gain:</strong> $Q_{\text{eng}} = \frac{P_{\text{gross}}}{P_{\text{recirc}}}$. Commercial plants target $Q_{\text{eng}} \ge 2.5\text{--}4.0$.</li>
                     </ol>
                 </section>
 
@@ -399,7 +400,7 @@ flowchart LR
                                     <td>Wolf et al., <em>Phys. Plasmas</em> 26, 082504</td>
                                     <td>7.0 MW</td>
                                     <td>Deuterium Test</td>
-                                    <td>$n	au T=6.5	imes 10^{19}$</td>
+                                    <td>$n\tau T=6.5\times 10^{19}$</td>
                                     <td>Laboratory Benchmark</td>
                                 </tr>
                             </tbody>
@@ -437,19 +438,19 @@ flowchart LR
                     <h2>7. Friendly Glossary of Fusion Terms</h2>
                     <div class="glossary-grid">
                         <div class="glossary-item">
-                            <h4>Scientific Gain ($Q_{	ext{sci}}$)</h4>
-                            <p>Fusion power out divided by heating power in ($P_{	ext{fus}} / P_{	ext{in}}$). When $Q > 1$, more fusion energy is released than entered the plasma.</p>
+                            <h4>Scientific Gain ($Q_{\text{sci}}$)</h4>
+                            <p>Fusion power out divided by heating power in ($P_{\text{fus}} / P_{\text{in}}$). When $Q > 1$, more fusion energy is released than entered the plasma.</p>
                         </div>
                         <div class="glossary-item">
-                            <h4>Engineering Gain ($Q_{	ext{eng}}$)</h4>
-                            <p>Gross electricity generated by the turbines divided by all electricity consumed to run the plant ($P_{	ext{gross}} / P_{	ext{recirc}}$). Needs to be $\ge 2.5$ for commercial profitability.</p>
+                            <h4>Engineering Gain ($Q_{\text{eng}}$)</h4>
+                            <p>Gross electricity generated by the turbines divided by all electricity consumed to run the plant ($P_{\text{gross}} / P_{\text{recirc}}$). Needs to be $\ge 2.5$ for commercial profitability.</p>
                         </div>
                         <div class="glossary-item">
                             <h4>Target Gain ($G$ in ICF)</h4>
-                            <p>Fusion energy generated per shot divided by the laser pulse energy striking the fuel capsule ($E_{	ext{fus}} / E_{	ext{laser}}$).</p>
+                            <p>Fusion energy generated per shot divided by the laser pulse energy striking the fuel capsule ($E_{\text{fus}} / E_{\text{laser}}$).</p>
                         </div>
                         <div class="glossary-item">
-                            <h4>Confinement Time ($	au_E$)</h4>
+                            <h4>Confinement Time ($\tau_E$)</h4>
                             <p>How long heat stays trapped in the plasma before leaking out. Like insulation in a winter jacket—higher is better!</p>
                         </div>
                         <div class="glossary-item">
@@ -461,7 +462,7 @@ flowchart LR
                             <p>The maximum density a tokamak plasma can maintain before radiative cooling triggers an abrupt disruption.</p>
                         </div>
                         <div class="glossary-item">
-                            <h4>Toroidal Beta ($eta$)</h4>
+                            <h4>Toroidal Beta ($\beta$)</h4>
                             <p>The ratio of plasma pressure to magnetic field pressure. Measures how efficiently the magnetic field contains the hot gas.</p>
                         </div>
                         <div class="glossary-item">
@@ -490,7 +491,7 @@ flowchart LR
                         </div>
                         <div class="glossary-item">
                             <h4>FOAS (Fiber-Optic Acoustic Sensing)</h4>
-                            <p>Optical fibers co-wound with superconducting tape that listen for microscopic acoustic strain sounds ($>25	ext{ kHz}$) before a quench occurs.</p>
+                            <p>Optical fibers co-wound with superconducting tape that listen for microscopic acoustic strain sounds ($>25\text{ kHz}$) before a quench occurs.</p>
                         </div>
                         <div class="glossary-item">
                             <h4>Tritium Breeding Ratio (TBR)</h4>
@@ -514,32 +515,32 @@ flowchart LR
 
                     <h3>8.1 Stellarator Modes (QI-HTS)</h3>
                     <ul>
-                        <li><strong>HTS Hotspot Quench:</strong> A localized cooling drop or strain crack causes a 1 mm spot on a coil to exceed $92	ext{ K}$. Electrical resistance appears, creating intense heating. <em>Protection:</em> Level 1 FPGA fires a pyrotechnic breaker in $<22\,\mu	ext{s}$ to dump energy into external resistors.</li>
-                        <li><strong>Divertor Detachment Fault:</strong> Gas seeding valves clog, causing hot plasma to hit tungsten target plates directly at $>16	ext{ MW/m}^2$. <em>Protection:</em> Level 2 opens secondary gas valves and throttles heating power by 25%.</li>
+                        <li><strong>HTS Hotspot Quench:</strong> A localized cooling drop or strain crack causes a 1 mm spot on a coil to exceed $92\text{ K}$. Electrical resistance appears, creating intense heating. <em>Protection:</em> Level 1 FPGA fires a pyrotechnic breaker in $<22\,\mu\text{s}$ to dump energy into external resistors.</li>
+                        <li><strong>Divertor Detachment Fault:</strong> Gas seeding valves clog, causing hot plasma to hit tungsten target plates directly at $>16\text{ MW/m}^2$. <em>Protection:</em> Level 2 opens secondary gas valves and throttles heating power by 25%.</li>
                         <li><strong>Core Tungsten Collapse:</strong> Sputtered heavy tungsten atoms enter the core, radiating energy away rapidly and dropping temperature. <em>Protection:</em> Central ECRH microwave mirrors reposition to flush impurities outward.</li>
-                        <li><strong>Pellet Refueling Burst:</strong> A frozen D-T pellet is shot into the core at $1,200	ext{ m/s}$, momentarily spiking density and alpha heating.</li>
-                        <li><strong>Startup Ignition Ramp:</strong> Energizing 20 modular coils from 0 to 5.5 Tesla while respecting mechanical stress limits ($<450	ext{ MPa}$).</li>
-                        <li><strong>Steady-State Nominal:</strong> Flattop high-confinement operation with $Q_{	ext{sci}} pprox 10.5$ and $+58	ext{ MW}$ net electric export.</li>
+                        <li><strong>Pellet Refueling Burst:</strong> A frozen D-T pellet is shot into the core at $1,200\text{ m/s}$, momentarily spiking density and alpha heating.</li>
+                        <li><strong>Startup Ignition Ramp:</strong> Energizing 20 modular coils from 0 to 5.5 Tesla while respecting mechanical stress limits ($<450\text{ MPa}$).</li>
+                        <li><strong>Steady-State Nominal:</strong> Flattop high-confinement operation with $Q_{\text{sci}} \approx 10.5$ and $+58\text{ MW}$ net electric export.</li>
                     </ul>
 
                     <h3>8.2 Tokamak Modes</h3>
                     <ul>
-                        <li><strong>Major Disruption:</strong> A locked tearing mode causes thermal collapse in $<1	ext{ ms}$, followed by inductive current collapse ($dI_p/dt pprox -10^9	ext{ A/s}$) generating $185	ext{ V}$ spikes. <em>Protection:</em> Shattered Pellet Injection (SPI) fires frozen neon pellets within 2 ms.</li>
-                        <li><strong>Vertical Displacement Event (VDE):</strong> Vertical positional feedback saturates; the plasma drifts $>40	ext{ mm}$ into the vessel. <em>Protection:</em> Fast in-vessel stabilizing coils fire immediately.</li>
-                        <li><strong>Type-I ELM Burst:</strong> Edge pressure gradient collapses, releasing periodic heat spikes ($16.4	ext{ MW/m}^2$) onto divertors. <em>Protection:</em> Resonant Magnetic Perturbation (RMP) coils maintain grassy ELM-free H-mode.</li>
-                        <li><strong>Runaway Electron Avalanche:</strong> Relativistic $3.8	ext{ MA}$ electron beam forms. <em>Protection:</em> Massive deuterium gas injection to raise density and brake the beam.</li>
+                        <li><strong>Major Disruption:</strong> A locked tearing mode causes thermal collapse in $<1\text{ ms}$, followed by inductive current collapse ($dI_p/dt \approx -10^9\text{ A/s}$) generating $185\text{ V}$ spikes. <em>Protection:</em> Shattered Pellet Injection (SPI) fires frozen neon pellets within 2 ms.</li>
+                        <li><strong>Vertical Displacement Event (VDE):</strong> Vertical positional feedback saturates; the plasma drifts $>40\text{ mm}$ into the vessel. <em>Protection:</em> Fast in-vessel stabilizing coils fire immediately.</li>
+                        <li><strong>Type-I ELM Burst:</strong> Edge pressure gradient collapses, releasing periodic heat spikes ($16.4\text{ MW/m}^2$) onto divertors. <em>Protection:</em> Resonant Magnetic Perturbation (RMP) coils maintain grassy ELM-free H-mode.</li>
+                        <li><strong>Runaway Electron Avalanche:</strong> Relativistic $3.8\text{ MA}$ electron beam forms. <em>Protection:</em> Massive deuterium gas injection to raise density and brake the beam.</li>
                         <li><strong>2/1 Neoclassical Tearing Mode:</strong> Magnetic island degrades energy confinement by 40%. <em>Protection:</em> Steerable microwave beams (ECCD) drive current into the island center to heal the magnetic field.</li>
-                        <li><strong>Nominal Flattop Burn:</strong> Inductive current flattop ($I_p = 15	ext{ MA}$, $q_{95} = 3.25$).</li>
+                        <li><strong>Nominal Flattop Burn:</strong> Inductive current flattop ($I_p = 15\text{ MA}$, $q_{95} = 3.25$).</li>
                     </ul>
 
                     <h3>8.3 Inertial Confinement Modes (ICF)</h3>
                     <ul>
                         <li><strong>Rayleigh-Taylor Asymmetry:</strong> Ablator fingers penetrate the core spark hotspot, dropping yield by 90%. <em>Protection:</em> Laser pulse shaping increases fuel adiabat to smooth out perturbations.</li>
-                        <li><strong>Laser Timing Jitter:</strong> Laser amplifiers drift, causing beams to arrive $>35	ext{ ps}$ out of sync. <em>Protection:</em> Piezo-actuated optical delay lines re-align beam arrival before the next shot.</li>
+                        <li><strong>Laser Timing Jitter:</strong> Laser amplifiers drift, causing beams to arrive $>35\text{ ps}$ out of sync. <em>Protection:</em> Piezo-actuated optical delay lines re-align beam arrival before the next shot.</li>
                         <li><strong>Final Optics Debris Damage:</strong> Target shrapnel degrades glass transmission to $<80\%$. <em>Protection:</em> Automated debris shield cassette advances clean protective glass.</li>
-                        <li><strong>Target Injection Miss:</strong> Pellet trajectory deviates $>40\,\mu	ext{m}$ from chamber center. <em>Protection:</em> Microsecond laser trigger interlock aborts the main amplifier pulse, dumping beam harmlessly into water calorimeters.</li>
-                        <li><strong>Chamber Clearing Choke:</strong> Residual metal vapor from previous shot exceeds $0.15	ext{ Pa}$, defocusing incoming beams. <em>Protection:</em> Controller pauses next shot by 100 ms to allow condensation.</li>
-                        <li><strong>5 Hz Nominal Repetition Pulse:</strong> Clean continuous microimplosions producing $914	ext{ MW}$ average fusion power and $+263	ext{ MW}$ net electric export.</li>
+                        <li><strong>Target Injection Miss:</strong> Pellet trajectory deviates $>40\,\mu\text{m}$ from chamber center. <em>Protection:</em> Microsecond laser trigger interlock aborts the main amplifier pulse, dumping beam harmlessly into water calorimeters.</li>
+                        <li><strong>Chamber Clearing Choke:</strong> Residual metal vapor from previous shot exceeds $0.15\text{ Pa}$, defocusing incoming beams. <em>Protection:</em> Controller pauses next shot by 100 ms to allow condensation.</li>
+                        <li><strong>5 Hz Nominal Repetition Pulse:</strong> Clean continuous microimplosions producing $914\text{ MW}$ average fusion power and $+263\text{ MW}$ net electric export.</li>
                     </ul>
                 </section>
 
@@ -562,7 +563,7 @@ flowchart LR
                 <section id="tut-quench-foas" class="tut-section">
                     <h2>10. Magnet Quench & FOAS Acoustic Detection</h2>
                     <p>
-                        A <strong>Quench</strong> occurs when a tiny spot on a superconducting coil warms above its critical temperature ($T_c pprox 92	ext{ K}$). Electrical resistance suddenly reappears, causing intense localized Joule heating.
+                        A <strong>Quench</strong> occurs when a tiny spot on a superconducting coil warms above its critical temperature ($T_c \approx 92\text{ K}$). Electrical resistance suddenly reappears, causing intense localized Joule heating.
                     </p>
                     <div class="mermaid">
 sequenceDiagram
@@ -579,7 +580,7 @@ sequenceDiagram
     Breaker->>Coil: Disconnects power and dumps 14 GJ into resistors
                     </div>
                     <p>
-                        Because heat spreads very slowly in REBCO (NZPV $pprox 0.01	ext{--}0.08	ext{ m/s}$), heat concentrates in a $1	ext{ mm}$ hotspot. To prevent melting, TAMI uses <strong>Fiber-Optic Acoustic Sensing (FOAS)</strong>—optical fibers that listen for ultrasonic acoustic emissions ($>25	ext{ kHz}$) caused by microscopic strain relaxations, triggering fast breakers in under <strong>50 microseconds</strong>.
+                        Because heat spreads very slowly in REBCO (NZPV $\approx 0.01\text{--}0.08\text{ m/s}$), heat concentrates in a $1\text{ mm}$ hotspot. To prevent melting, TAMI uses <strong>Fiber-Optic Acoustic Sensing (FOAS)</strong>—optical fibers that listen for ultrasonic acoustic emissions ($>25\text{ kHz}$) caused by microscopic strain relaxations, triggering fast breakers in under <strong>50 microseconds</strong>.
                     </p>
                 </section>
 
@@ -672,6 +673,91 @@ flowchart TD
             </div>
 
             <div class="unified-twin-studio">
+                <!-- Live Synthetic Ingestion Cockpit & Adaptive Waveform Strip -->
+                <div class="card glass-card synthetic-cockpit-card">
+                    <div class="cockpit-top-bar">
+                        <div class="cockpit-status-group">
+                            <span class="live-pulse-badge">
+                                <span class="pulse-ring"></span>
+                                <span class="pulse-core"></span>
+                                <span id="cockpit-stream-label">SYNTHETIC INGESTION LIVE</span>
+                            </span>
+                            <span class="cockpit-pill highlight-cyan" id="cockpit-udp-status">UDP: 127.0.0.1:9005</span>
+                            <span class="cockpit-pill" id="cockpit-packet-rate">RATE: 10.0 Hz</span>
+                            <span class="cockpit-pill" id="cockpit-seq-counter">SEQ #10,482</span>
+                            <span class="cockpit-pill highlight-gold" id="cockpit-loss-tag">LOSS: 0.00% (RELIABLE)</span>
+                        </div>
+                        <div class="cockpit-controls-group">
+                            <span class="cockpit-ctrl-label">STREAM FREQ:</span>
+                            <div class="freq-btn-group">
+                                <button class="freq-btn" data-freq="1">1 Hz</button>
+                                <button class="freq-btn" data-freq="5">5 Hz</button>
+                                <button class="freq-btn active" data-freq="10">10 Hz</button>
+                                <button class="freq-btn" data-freq="20">20 Hz</button>
+                            </div>
+                            <button class="inject-critical-btn" id="btn-inject-anomaly">
+                                <span>⚡</span> Inject Critical Anomaly
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 3 Adaptive Precursor Waveform Channels -->
+                    <div class="cockpit-waveforms-grid">
+                        <div class="waveform-box">
+                            <div class="waveform-header">
+                                <span class="waveform-title" id="wave-1-title">Channel 1: FOAS Acoustic Emission</span>
+                                <span class="waveform-val highlight-cyan" id="wave-1-val">3.2 dB (Quiescent)</span>
+                            </div>
+                            <canvas id="canvas-wave-1" class="sparkline-canvas" width="340" height="64"></canvas>
+                            <div class="waveform-footer">
+                                <span class="wave-threshold" id="wave-1-thresh">Trip Threshold: &gt; 25.0 dB</span>
+                                <span class="wave-unit" id="wave-1-unit">Ultrasonic FOAS</span>
+                            </div>
+                        </div>
+
+                        <div class="waveform-box">
+                            <div class="waveform-header">
+                                <span class="waveform-title" id="wave-2-title">Channel 2: Capacitance Shift Rate (dC/dt)</span>
+                                <span class="waveform-val highlight-purple" id="wave-2-val">+0.12 pF/s</span>
+                            </div>
+                            <canvas id="canvas-wave-2" class="sparkline-canvas" width="340" height="64"></canvas>
+                            <div class="waveform-footer">
+                                <span class="wave-threshold" id="wave-2-thresh">Trip Threshold: &gt; 15.0 pF/s</span>
+                                <span class="wave-unit" id="wave-2-unit">Stray Dielectric</span>
+                            </div>
+                        </div>
+
+                        <div class="waveform-box">
+                            <div class="waveform-header">
+                                <span class="waveform-title" id="wave-3-title">Channel 3: Localized Hotspot Temp</span>
+                                <span class="waveform-val highlight-gold" id="wave-3-val">20.2 K (Margin 71.8 K)</span>
+                            </div>
+                            <canvas id="canvas-wave-3" class="sparkline-canvas" width="340" height="64"></canvas>
+                            <div class="waveform-footer">
+                                <span class="wave-threshold" id="wave-3-thresh">Trip Threshold: &gt; 92.0 K</span>
+                                <span class="wave-unit" id="wave-3-unit">REBCO HTS Critical</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Collapsible Event Trip Timeline -->
+                    <div class="cockpit-timeline-toggle-bar">
+                        <button class="timeline-toggle-btn" id="btn-toggle-timeline">
+                            <span id="timeline-toggle-icon">▼</span>
+                            <span>Level 1/2 FPGA Trip &amp; Interlock Event Timeline</span>
+                            <span class="timeline-count-badge" id="timeline-trip-count">0 Trips Logged</span>
+                        </button>
+                        <button class="timeline-clear-btn" id="btn-clear-timeline">Clear Log</button>
+                    </div>
+
+                    <div class="cockpit-event-timeline" id="cockpit-event-timeline">
+                        <div class="timeline-empty-notice" id="timeline-empty-notice">
+                            🟢 All channels within nominal operating envelopes. Zero trips detected on MTCA.4 FPGA.
+                        </div>
+                        <div class="timeline-list" id="timeline-list" style="display: none;"></div>
+                    </div>
+                </div>
+
                 <!-- Top Row: 3D Viewport & Physics Telemetry HUD -->
                 <div class="studio-top-grid">
                     <!-- 3D Viewport Card -->
@@ -1043,34 +1129,48 @@ flowchart TD
                         </div>
                     </div>
 
-                    <!-- Subsystem 6: Multi-Subsystem State Machine Diagram (Mermaid) -->
-                    <div class="subsystem-card" style="border-top-color: #CBD5E1;">
+                    <!-- Subsystem 6: Multi-Subsystem State Machine & Interlock Transitions -->
+                    <div class="subsystem-card" style="border-top-color: #38BDF8;">
                         <div>
                             <div class="subsystem-header">
                                 <div>
-                                    <h4>6. System State Machine</h4>
-                                    <div class="subsystem-sub">Coupled Multi-Physics Transitions</div>
+                                    <h4>6. System State Machine & Transitions</h4>
+                                    <div class="subsystem-sub">Deterministic IEC 62443 Failure Transitions</div>
                                 </div>
-                                <span class="subsystem-badge">IEC 62443 CONDUIT</span>
+                                <span class="subsystem-badge" id="sm-badge-topology">QI-HTS</span>
                             </div>
-                            <div class="subsystem-metrics" style="margin-bottom: 0;">
-                                <div class="mermaid" style="margin: 0; padding: 10px; font-size: 11px;">
-stateDiagram-v2
-    [*] --> StartupRamp
-    StartupRamp --> SteadyState : Coils Energized & ECRH Break
-    SteadyState --> PelletBurst : Cryo D-T Injection
-    PelletBurst --> SteadyState : Density Relax
-    SteadyState --> DivertorFault : Detachment Lost
-    DivertorFault --> SteadyState : Ar/Ne Puff Correct
-    SteadyState --> ImpurityCollapse : Core Sputtering
-    SteadyState --> QuenchDump : Hotspot >90K / Acoustic >25kHz
-    QuenchDump --> [*] : Fast Energy Extraction
+
+                            <div class="state-machine-box" id="state-machine-box">
+                                <div class="sm-active-banner" id="sm-active-banner">
+                                    <div class="sm-banner-left">
+                                        <span class="sm-pulse-dot" id="sm-pulse-dot"></span>
+                                        <div>
+                                            <div class="sm-active-label">ACTIVE SYSTEM STATE:</div>
+                                            <div class="sm-active-name" id="sm-active-name">MODE_STEADY_STATE_NOMINAL</div>
+                                        </div>
+                                    </div>
+                                    <span class="sm-status-pill" id="sm-status-pill">NOMINAL FLATTOP</span>
+                                </div>
+
+                                <div class="sm-states-grid" id="sm-states-grid">
+                                    <!-- Rendered dynamically by app.js based on activeReactor -->
+                                </div>
+
+                                <div class="sm-interlock-footer">
+                                    <div class="sm-interlock-row">
+                                        <span class="sm-interlock-label">PRECURSOR TRIGGER:</span>
+                                        <span class="sm-interlock-val" id="sm-interlock-trigger">Acoustic &lt; 5 kHz | dI_p/dt &lt; 10⁴ A/s (QUIESCENT)</span>
+                                    </div>
+                                    <div class="sm-interlock-row">
+                                        <span class="sm-interlock-label">SAFETY ACTION:</span>
+                                        <span class="sm-interlock-val highlight-green" id="sm-interlock-action">Level 1 FPGA Interlock Armed (&lt;22 µs Pyrotechnic Breakers)</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="subsystem-footer-status">
-                            <span class="status-indicator-dot dot-green"></span>
-                            <span>State Machine Active & Deterministic</span>
+                            <span class="status-indicator-dot dot-green" id="sm-footer-dot"></span>
+                            <span id="sm-footer-text">State Machine Deterministic &amp; Monitored</span>
                         </div>
                     </div>
                 </div>

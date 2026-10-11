@@ -514,7 +514,7 @@ class StellaratorSyntheticGenerator:
 
         return quench_packet, subsystem_report
 
-    def publish_loop(self, frequency_hz=20.0, mode_cycle_interval=12.0, quench_after_sec=None):
+    def publish_loop(self, frequency_hz=20.0, mode_cycle_interval=12.0, quench_after_sec=None, max_frames=None):
         print(f"[SYNTHETIC-GEN] Starting high-fidelity telemetry stream at {frequency_hz} Hz...")
         period = 1.0 / frequency_hz
         start_time = time.time()
@@ -536,6 +536,9 @@ class StellaratorSyntheticGenerator:
 
         try:
             while True:
+                if max_frames is not None and self.seq_num >= max_frames:
+                    print(f"[SYNTHETIC-GEN] Reached target frame count {max_frames}. Exiting.")
+                    break
                 loop_start = time.time()
 
                 # Automated quench trigger if requested
@@ -606,6 +609,7 @@ if __name__ == "__main__":
                         help="Initial operational mode or automated cycle ('cycle')")
     parser.add_argument("--cycle-interval", type=float, default=10.0, help="Seconds per mode when in cycle mode")
     parser.add_argument("--sensor-id", type=str, default="FOAS-HTS-COIL-03A", help="Primary sensor ID")
+    parser.add_argument("--count", type=int, default=None, help="Number of telemetry frames to publish before stopping")
     args = parser.parse_args()
 
     r_lower = args.reactor.lower()
@@ -628,4 +632,4 @@ if __name__ == "__main__":
                 gen.set_mode(m)
                 break
 
-    gen.publish_loop(frequency_hz=args.freq, mode_cycle_interval=args.cycle_interval, quench_after_sec=args.quench_after)
+    gen.publish_loop(frequency_hz=args.freq, mode_cycle_interval=args.cycle_interval, quench_after_sec=args.quench_after, max_frames=args.count)
