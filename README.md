@@ -1,27 +1,73 @@
 # SKHY - TAMI (Telemetry, Analytics, Monitoring, & Integration) Architecture Stack
 
-Enterprise Instrumentation and Control (I&C) stack and Multi-Reactor Digital Twin for **Quasi-Isodynamic (QI-HTS) Stellarators**, **Advanced Tokamaks**, and **Inertial Confinement Fusion (ICF)**, engineered by the Lead Systems Software Architecture & Staff Engineering team at SKHY.
+Enterprise Instrumentation & Control (I&C) Stack and Multi-Reactor Digital Twin for **Quasi-Isodynamic (QI-HTS) Stellarators**, **Advanced Tokamaks**, and **Inertial Confinement Fusion (ICF)**, engineered by the Lead Systems Software Architecture & Staff Engineering team at SKHY.
+
+Designed with an **Anduril-grade Obsidian Tactical C2 interface**, strict **Purdue 6-Tier Architecture isolation**, and **IEC 62443 Zero-Trust Security Conduits**.
 
 ---
 
-## 🚀 Key Multi-Reactor Capabilities
+## 🌐 Mission Control & Dedicated Endpoint Architecture
 
-1. **Multi-Reactor Digital Twin Studio (Three.js WebGL)**:
-   - **Quasi-Isodynamic Stellarator**: 20 modular non-planar HTS coils, 5-period helical plasma flux surface, island divertor strike lines, and REBCO hotspot quench detection.
-   - **Advanced Tokamak**: Central Solenoid cylinder, 16 D-shaped Toroidal Field (TF) coils, elongated D-shaped plasma ($\kappa \approx 1.6$), upper/lower poloidal divertors, and major disruption collapse FX.
-   - **Inertial Confinement Fusion (ICF)**: Spherical armored reaction chamber, 16 converging pulsed UV laser beam cones, cryogenic DT pellet injection, 5 Hz microimplosion detonations, and Rayleigh-Taylor instability alerts.
+TAMI cleanly separates real-time operational mission control from comprehensive technical specifications and API schemas through dedicated routes and persistent top-bar navigation:
 
-2. **2D Interactive Sankey Energy Flow Simulator**:
-   - Inspired directly by the [Fusion Energy Base Power Plant Simulator](https://www.fusionenergybase.com/fusion-power-plant-simulator).
-   - Dynamic cubic Bézier power flow ribbons with animated particles.
-   - **Continuous Steady-State Regime** (Stellarator & Tokamak): $Q_{\text{sci}}$, $P_{\text{heating}}$, $\eta_{\text{thermal}}$, $\eta_{\text{driver}}$, $M$, $P_{\text{aux}}$.
-   - **Pulsed Driver Regime** (ICF): Driver energy $E_{\text{laser}}$ (MJ), repetition rate $f_{\text{rep}}$ (Hz), and target gain $G$.
-   - Live commercial net electricity calculation ($P_{\text{net}} = P_{\text{gross}} - P_{\text{recirc}}$) and engineering gain ($Q_{\text{eng}}$).
+```mermaid
+graph TD
+    Client[Browser / Operator] --> Router{TAMI FastAPI Gateway :8000}
+    Router -->|GET / or /twin| C2[MISSION CONTROL: 3D Digital Twin Command OS]
+    Router -->|GET /manual or /docs| Dossier[TECHNICAL DOSSIER: Engineering Manual & Physics]
+    Router -->|GET /api/docs| Swagger[OpenAPI / Swagger REST Schema]
+    Router -->|GET /graphql| GQL[Strawberry GraphQL Explorer]
+    
+    C2 <-->|Seamless Portal Switcher| Dossier
+```
 
-3. **Polymorphic Protocol Buffers Schema (`proto/skhy_telemetry.proto`)**:
-   - `ReactorType` enum: `REACTOR_QI_STELLARATOR`, `REACTOR_TOKAMAK`, `REACTOR_ICF`.
-   - 18 operational and failure modes covering disruptions, VDEs, ELMs, runaway electrons, NTMs, Rayleigh-Taylor mixing, timing jitter, and optics degradation.
-   - Polymorphic `oneof reactor_core { StellaratorCoreTelemetry; TokamakCoreTelemetry; IcfCoreTelemetry; }`.
+| Route | View Description | Target Audience |
+| :--- | :--- | :--- |
+| **`http://127.0.0.1:8000/`** or **`/twin`** | **Mission Control Command OS**: Real-time 3D Three.js reactor viewport, multi-subsystem telemetry, 2D Sankey energy balance, edge interlock simulator, and Purdue tier inspector. | Plant Operators, Control Engineers, Systems Architects |
+| **`http://127.0.0.1:8000/manual`** | **Engineering Technical Dossier**: 12-chapter comprehensive physics manual, $\LaTeX$ math formulas, dark Mermaid architecture diagrams, and hardware failure modes. | Research Physicists, Nuclear Engineers, New Onboarding |
+| **`http://127.0.0.1:8000/api/docs`** | **Interactive REST OpenAPI (Swagger)**: Subsystem telemetry queries, reactor mode actuation, and quench log endpoints. | Agentic AI Agents, Integration Engineers |
+| **`http://127.0.0.1:8000/graphql`** | **Strawberry GraphQL Explorer**: Schema queries for coupled multi-physics time-series and power balance reports ($Q_{\text{sci}}$). | Data Science & Surrogate Model Training Teams |
+
+---
+
+## ⚡ Core Platform Capabilities
+
+### 1. 3D Multi-Reactor Digital Twin Studio (Three.js WebGL)
+- **Quasi-Isodynamic (QI) Stellarator**:
+  - 20 modular non-planar HTS coils with out-of-plane sinusoidal twist.
+  - 5-period helical plasma flux surface (V3FIT equilibrium reconstruction).
+  - Island divertor target strike plates and REBCO hotspot quench detection.
+- **Advanced Tokamak ($I_p = 15\text{ MA}$)**:
+  - Central Solenoid induction cylinder and 16 D-shaped Toroidal Field (TF) coils.
+  - Elongated D-shaped plasma core ($\kappa \approx 1.6$) with H-mode edge pedestal.
+  - Upper and lower poloidal divertor target rings and major disruption collapse FX.
+- **Inertial Confinement Fusion (ICF)**:
+  - Spherical armored reaction chamber with cryogenic DT pellet injector.
+  - 16 converging pulsed UV laser beam cones (2.15 MJ, 5 Hz repetition rate).
+  - High-gain microimplosion detonations ($G = 85$) and Rayleigh-Taylor instability alerts.
+
+### 2. 2D Interactive Sankey Energy Flow Simulator
+- Inspired directly by the [Fusion Energy Base Power Plant Simulator](https://www.fusionenergybase.com/fusion-power-plant-simulator).
+- Dynamic cubic Bézier power flow ribbons with animated particles.
+- **Continuous Steady-State Regime** (Stellarator & Tokamak): Scientific gain ($Q_{\text{sci}}$), auxiliary heating ($P_{\text{heating}}$), thermal efficiency ($\eta_{\text{thermal}}$), driver efficiency ($\eta_{\text{driver}}$), blanket multiplier ($M$).
+- **Pulsed Driver Regime** (ICF): Driver energy ($E_{\text{laser}}$ in MJ), repetition frequency ($f_{\text{rep}}$ in Hz), target gain ($G$).
+- Real-time commercial net electric power calculation:
+  $$P_{\text{net}} = P_{\text{gross}} - P_{\text{recirc}}$$
+- Research benchmark presets: ITER Q=10 baseline, SPARC pulsed H-mode, W7-X steady-state, NIF Target Gain ($G=1.5$), Commercial QI Reactor.
+
+### 3. Level 1 Edge Quench Protection Kernel (Rust / MTCA.4 MicroTCA)
+- Zero-allocation, sub-millisecond multi-sensor fusion kernel.
+- **Tri-Sensor Hardware Interlock**:
+  - Fiber-Optic Acoustic Sensing (FOAS): Ultrasonic acoustic emission $> 25\text{ kHz}$.
+  - Thermal Gradient ($dT/dt > 5\text{ K/s}$).
+  - Dielectric Stray Capacitance Shift ($dC/dt > 15\text{ pF/s}$).
+- REBCO Normal Zone Propagation Velocity (NZPV $\approx 0.01 - 0.1\text{ m/s}$) tracking.
+- Ultra-low latency pyrotechnic breaker actuation ($< 50\ \mu\text{s}$) dump into liquid helium resistor banks.
+
+### 4. Polymorphic Protocol Buffers Schema (`proto/skhy_telemetry.proto`)
+- Multi-reactor confinement taxonomy: `REACTOR_QI_STELLARATOR`, `REACTOR_TOKAMAK`, `REACTOR_ICF`.
+- 18 operational and failure modes covering disruptions, vertical displacement events (VDEs), ELMs, runaway electron avalanches, neoclassical tearing modes (NTMs), Rayleigh-Taylor mixing, laser power jitter, and debris shield pitting.
+- Polymorphic payload union: `oneof reactor_core { StellaratorCoreTelemetry; TokamakCoreTelemetry; IcfCoreTelemetry; }`.
 
 ---
 
@@ -87,7 +133,7 @@ Enterprise Instrumentation and Control (I&C) stack and Multi-Reactor Digital Twi
    - **L0/L1 -> L2/L3**: Microsecond deterministic DDS channels and direct UDP fast dump interlock conduit.
    - **L3 -> L4**: Apache Kafka secure streaming conduit with TLS 1.3 encryption.
    - **L4 -> L5**: Read-only REST and GraphQL endpoints for AI training and agent query without back-propagation permissions into control loops.
-3. **Zero-Trust Envelope**: Every message carries a `skhy.telemetry.Envelope` header with nano-second timestamps, source node verification, sequence counters, and security tokens.
+3. **Zero-Trust Envelope**: Every message carries a `skhy.telemetry.Envelope` header with nanosecond timestamps, source node verification, sequence counters, and HMAC security tokens.
 
 ---
 
@@ -110,83 +156,98 @@ c:\Projects\tami-cama\
 │   ├── __init__.py
 │   └── skhy_telemetry_pb2.py
 ├── synthetic_generator/                  # Purdue Level 0/1 Synthetic Sensor Generator (Python)
-│   └── synthetic_data_gen.py             # Multi-reactor simulation with 18 distinct failure modes
+│   └── synthetic_data_gen.py             # Multi-reactor continuous telemetry stream with 18 failure modes
 ├── digital_twin/                         # Purdue Level 4/5 Surrogate Engine (Python / PyTorch)
 │   └── digital_twin_engine.py            # PINN surrogate reconstructing 3D flux mesh, Tokamak & ICF physics
-├── tutorial_viewer/                     # Interactive Web Tutorial & Multi-Reactor Studio
-│   ├── index.html                        # Glassmorphic UI with Three.js 3D Viewport & 2D Sankey Canvas
-│   ├── style.css                         # Sleek responsive dark-theme design system
+├── tutorial_viewer/                     # Obsidian C2 Web Interface
+│   ├── index.html                        # Mission Control OS: 3D Reactor Twin & Subsystem HUD
+│   ├── manual.html                       # Engineering Technical Dossier: 12-Chapter Physics Manual
+│   ├── style.css                         # Obsidian Tactical dark theme design system
 │   └── app.js                            # Three.js 3D procedural models & FEB-inspired Sankey flow engine
-├── run_tutorial.py                       # One-click launcher for Tutorial Viewer & Web Studio
-├── run_demo.py                           # Master end-to-end demonstrator and orchestrator script
-├── TUTORIAL.md                           # Comprehensive comparative physics guide (KaTeX & Mermaid)
+├── run_demo.py                           # Master end-to-end orchestrator & benchmark script
+├── run_tutorial.py                       # Standalone launcher for Engineering Technical Dossier
+├── TUTORIAL.md                           # Master markdown source for fusion physics & architecture
 └── .gitignore                            # Clean ignores for Rust/Python/HDF5 build artifacts
 ```
 
 ---
 
-## 🎓 Beginner Tutorial & Interactive Web Viewer
+## 🚀 Quick Start & Live Demonstration
 
-If you are new to nuclear fusion or real-time control software:
+### 1. Launch Complete End-to-End Mission Control (All 6 Levels)
 
-1. **Step-by-Step Written Guide**: Read [TUTORIAL.md](file:///c:/Projects/tami-cama/TUTORIAL.md) for a comprehensive explanation of fusion energy, stellarators, tokamaks, ICF, REBCO superconductor magnets, quench physics, and the 6 Purdue levels with Mermaid diagrams and $\LaTeX$ equations.
-2. **Interactive Visual Tutorial Viewer**: Launch the interactive web dashboard with live quench sliders, 3D Three.js reactor models, and 2D Sankey energy flow diagram:
-   ```bash
-   python run_tutorial.py
-   ```
-   Or visit `http://127.0.0.1:8000/tutorial/` while the API service is active.
-
----
-
-## ⚡ Quick Start & End-to-End Demonstration
-
-To run the complete multi-tier system demonstration (all 6 Purdue levels simultaneously):
+To launch the full enterprise stack (Level 1 Edge Node, Level 3 Middleware Hub, Level 4 Digital Twin, Level 5 Data Lake API, and Synthetic Multi-Reactor Telemetry Stream):
 
 ```bash
 python run_demo.py
 ```
 
-### Running Components Individually
+This starts all subsystems, performs REST/GraphQL verification tests, and automatically opens **Mission Control** in your default browser at:
+`http://127.0.0.1:8000/`
 
-1. **Interactive Tutorial Viewer & 3D Web Studio**:
-   ```bash
-   python run_tutorial.py
-   ```
+### 2. Launch Engineering Technical Manual & Dossier
 
-2. **Level 1 Edge Protection Module (Rust)**:
-   ```bash
-   cd edge_quench
-   cargo run
-   ```
+To start the server and directly open the 12-chapter technical guide:
 
-3. **Level 3 Supervisory Middleware Hub (Rust)**:
-   ```bash
-   cd middleware_hub
-   cargo run
-   ```
+```bash
+python run_tutorial.py
+```
 
-4. **Level 4/5 Data Lake API & Tutorial Server (Python / FastAPI)**:
-   ```bash
-   python data_lake_api/ai_ingestion_api.py
-   ```
-   - Interactive Tutorial: `http://127.0.0.1:8000/tutorial/`
-   - REST API Docs: `http://127.0.0.1:8000/docs`
-   - GraphQL Playground: `http://127.0.0.1:8000/graphql`
-   - Active Reactors: `http://127.0.0.1:8000/api/v1/reactors`
+Or navigate to `http://127.0.0.1:8000/manual`.
 
-5. **Level 4/5 Digital Twin Engine (PyTorch)**:
-   ```bash
-   python digital_twin/digital_twin_engine.py
-   ```
+---
 
-6. **Level 0/1 Synthetic Telemetry Generator (Python)**:
-   ```bash
-   # Run for Stellarator (default)
-   python synthetic_generator/synthetic_data_gen.py --freq 100.0 --quench-after 3.0
+## 🛠 Running Components Individually
 
-   # Run for Tokamak
-   python synthetic_generator/synthetic_data_gen.py --reactor REACTOR_TOKAMAK --mode MODE_TOKAMAK_MAJOR_DISRUPTION
+You can also run any Purdue tier independently:
 
-   # Run for ICF
-   python synthetic_generator/synthetic_data_gen.py --reactor REACTOR_ICF --mode MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY
-   ```
+### Level 1 Edge Protection Module (Rust)
+```bash
+cd edge_quench
+cargo run --release
+```
+
+### Level 3 Supervisory Middleware Hub (Rust)
+```bash
+cd middleware_hub
+cargo run --release
+```
+
+### Level 4/5 Data Lake API & C2 Server (Python / FastAPI)
+```bash
+python data_lake_api/ai_ingestion_api.py
+```
+- **Mission Control**: `http://127.0.0.1:8000/`
+- **Technical Manual**: `http://127.0.0.1:8000/manual`
+- **REST API Docs**: `http://127.0.0.1:8000/api/docs`
+- **GraphQL Console**: `http://127.0.0.1:8000/graphql`
+- **Active Topologies**: `http://127.0.0.1:8000/api/v1/reactors`
+
+### Level 4/5 Digital Twin PINN Engine (PyTorch)
+```bash
+python digital_twin/digital_twin_engine.py
+```
+
+### Level 0/1 Synthetic Telemetry Generator (Continuous Stream)
+```bash
+# Run for QI Stellarator (default nominal steady-state)
+python synthetic_generator/synthetic_data_gen.py --freq 25.0 --reactor REACTOR_QI_STELLARATOR
+
+# Inject HTS Magnet Quench Anomaly
+python synthetic_generator/synthetic_data_gen.py --reactor REACTOR_QI_STELLARATOR --mode MODE_HTS_COIL_HOTSPOT_QUENCH
+
+# Run Advanced Tokamak with Major Disruption
+python synthetic_generator/synthetic_data_gen.py --reactor REACTOR_TOKAMAK --mode MODE_TOKAMAK_MAJOR_DISRUPTION
+
+# Run ICF with Rayleigh-Taylor Implosion Asymmetry
+python synthetic_generator/synthetic_data_gen.py --reactor REACTOR_ICF --mode MODE_ICF_RAYLEIGH_TAYLOR_ASYMMETRY
+```
+
+---
+
+## 🔬 Physics & Engineering References
+
+- **Scientific Gain ($Q_{\text{sci}}$) & Plant Balance**: Modeled after published data and the [Fusion Energy Base Power Plant Simulator](https://www.fusionenergybase.com/fusion-power-plant-simulator).
+- **HTS REBCO Quench Dynamics**: Normal Zone Propagation Velocity ($NZPV \approx 0.01 - 0.1\text{ m/s}$) and Fiber-Optic Acoustic Sensing (FOAS) based on experimental magnet data.
+- **Tokamak Disruption Physics**: $I_p$ thermal/current quench and locked-mode precursors calibrated to ITER/SPARC parameters.
+- **Purdue Model & ICS Security**: Standardized under ISA-95 and IEC 62443 zero-trust zone-conduit architecture.

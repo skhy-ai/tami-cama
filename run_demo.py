@@ -124,26 +124,27 @@ def main():
         except Exception as e:
             print(f"[!] API verification warning: {e}")
 
-        # 7. Open Browser to Tutorial Viewer
-        tutorial_url = "http://127.0.0.1:8000/tutorial/"
+        # 7. Open Browser to Mission Control & Digital Twin
+        twin_url = "http://127.0.0.1:8000/"
+        manual_url = "http://127.0.0.1:8000/manual"
         print("\n=========================================================================")
-        print(" [LIVE SERVICES ACTIVE] TUTORIAL VIEWER & 3D DIGITAL TWIN STUDIO")
+        print(" [LIVE SERVICES ACTIVE] TAMI MISSION CONTROL & 3D DIGITAL TWIN")
         print("=========================================================================")
-        print(f"[+] Opening Tutorial & Multi-Reactor Studio in browser: {tutorial_url}")
-        print("    * Tab 1: 📖 Beginner Guide & Physics (TUTORIAL.md)")
-        print("    * Tab 2: 🌐 Unified 3D Digital Twin Studio & Subsystems")
-        print("    * Tab 3: ⚛️ 2D Energy Diagram (Sankey & Research Presets)")
-        print("    * Tab 4: ⚡ Quench & FOAS Edge Interlock Simulator")
-        print("    * Tab 5: 🏛 Purdue 6-Tier Architecture Inspector")
-        print("\n[*] Interactive endpoints:")
-        print(f"    - Web Studio:       {tutorial_url}")
-        print("    - REST API Docs:    http://127.0.0.1:8000/docs")
-        print("    - GraphQL Console:  http://127.0.0.1:8000/graphql")
+        print(f"[+] Launching Mission Control in browser: {twin_url}")
+        print("    * View 1: 3D Multi-Reactor Twin & Subsystem Telemetry")
+        print("    * View 2: 2D Energy Balance (Sankey Flow & Presets)")
+        print("    * View 3: Edge Interlock & REBCO Quench Simulator")
+        print("    * View 4: Purdue 6-Tier Architecture Inspector")
+        print("\n[*] Available interactive endpoints:")
+        print(f"    - Mission Control:     {twin_url}")
+        print(f"    - Engineering Manual:  {manual_url}")
+        print("    - REST API Docs:       http://127.0.0.1:8000/api/docs")
+        print("    - GraphQL Console:     http://127.0.0.1:8000/graphql")
         print("\n[!] Multi-reactor services are running interactively.")
         print("[!] Press Ctrl+C in this terminal to stop all services.\n")
 
         try:
-            webbrowser.open(tutorial_url)
+            webbrowser.open(twin_url)
         except Exception:
             pass
 

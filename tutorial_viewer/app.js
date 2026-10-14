@@ -2507,7 +2507,6 @@ function buildStellaratorModel() {
         emissiveIntensity: 0.6,
         roughness: 0.1,
         transmission: 0.65,
-        thickness: 2.0,
         transparent: true,
         opacity: 0.85
     });
@@ -2614,7 +2613,6 @@ function buildTokamakModel() {
         emissiveIntensity: 0.7,
         roughness: 0.1,
         transmission: 0.6,
-        thickness: 2.5,
         transparent: true,
         opacity: 0.9
     });

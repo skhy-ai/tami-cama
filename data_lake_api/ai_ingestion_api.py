@@ -15,6 +15,8 @@ from typing import List, Optional, Dict, Any
 import h5py
 import numpy as np
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Query, HTTPException, Path, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
@@ -248,10 +250,22 @@ graphql_app = GraphQLRouter(graphql_schema)
 # FastAPI REST Endpoints & Background Telemetry Ingestion Receiver
 # ============================================================================
 
+TUTORIAL_VIEWER_DIR = os.path.join(ROOT_DIR, "tutorial_viewer")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_hdf5()
+    ingest_thread = threading.Thread(target=udp_telemetry_listener, daemon=True)
+    ingest_thread.start()
+    yield
+
 app = FastAPI(
     title="SKHY - TAMI Agentic AI Data Lake API",
     description="Purdue Level 4/5 Enterprise API for Multi-Subsystem Stellarator Telemetry, Plant Power Balance, and Agentic AI Ingestion",
-    version="2.5.0"
+    version="2.5.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    lifespan=lifespan
 )
 
 # Enable CORS for browser UI access
@@ -265,14 +279,30 @@ app.add_middleware(
 
 app.include_router(graphql_app, prefix="/graphql")
 
-# Mount tutorial viewer static files
-TUTORIAL_VIEWER_DIR = os.path.join(ROOT_DIR, "tutorial_viewer")
+# Mount tutorial viewer static files for direct asset access
 if os.path.exists(TUTORIAL_VIEWER_DIR):
     app.mount("/tutorial", StaticFiles(directory=TUTORIAL_VIEWER_DIR, html=True), name="tutorial")
+    app.mount("/static", StaticFiles(directory=TUTORIAL_VIEWER_DIR), name="static")
 
 @app.get("/")
+@app.get("/twin")
 def read_root():
+    fpath = os.path.join(TUTORIAL_VIEWER_DIR, "index.html")
+    if os.path.exists(fpath):
+        return FileResponse(fpath, media_type="text/html")
     return RedirectResponse(url="/tutorial/")
+
+@app.get("/manual")
+def read_manual():
+    fpath = os.path.join(TUTORIAL_VIEWER_DIR, "manual.html")
+    if os.path.exists(fpath):
+        return FileResponse(fpath, media_type="text/html")
+    return FileResponse(os.path.join(TUTORIAL_VIEWER_DIR, "index.html"), media_type="text/html")
+
+@app.get("/docs")
+@app.get("/guide")
+def redirect_to_manual():
+    return RedirectResponse(url="/manual")
 
 @app.get("/style.css")
 def get_root_style():
@@ -306,12 +336,6 @@ def get_tutorial_md_sub():
     if os.path.exists(tutorial_path):
         return FileResponse(tutorial_path, media_type="text/markdown")
     raise HTTPException(status_code=404, detail="TUTORIAL.md not found")
-
-@app.on_event("startup")
-def startup_event():
-    init_hdf5()
-    ingest_thread = threading.Thread(target=udp_telemetry_listener, daemon=True)
-    ingest_thread.start()
 
 def generate_simulated_subsystem_record(reactor: str, mode: str) -> dict:
     now_ns = int(time.time() * 1e9)

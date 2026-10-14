@@ -18,8 +18,9 @@ from data_lake_api.ai_ingestion_api import app
 
 def open_browser():
     time.sleep(1.2)
-    url = "http://127.0.0.1:8000/tutorial"
-    print(f"\n[+] Opening Interactive Tutorial Viewer in your browser: {url}\n")
+    url = "http://127.0.0.1:8000/manual"
+    print(f"\n[+] Opening Engineering Technical Manual in your browser: {url}")
+    print("[*] Note: 3D Mission Control Digital Twin is available at: http://127.0.0.1:8000/\n")
     try:
         webbrowser.open(url)
     except Exception as e:
@@ -28,10 +29,11 @@ def open_browser():
 
 if __name__ == "__main__":
     print("=========================================================================")
-    print(" SKHY - TAMI INTERACTIVE TUTORIAL VIEWER & SIMULATOR")
-    print(" Nuclear Fusion & Stellarator Control Stack Beginner Guide")
+    print(" SKHY - TAMI ENGINEERING TECHNICAL DOSSIER & MANUAL")
+    print(" Nuclear Fusion & Multi-Reactor Control Stack Technical Guide")
     print("=========================================================================")
-    print("[*] Serving tutorial at: http://127.0.0.1:8000/tutorial")
+    print("[*] Technical Manual: http://127.0.0.1:8000/manual")
+    print("[*] Mission Control:  http://127.0.0.1:8000/")
     print("[*] Press Ctrl+C to stop the server at any time.\n")
 
     threading.Thread(target=open_browser, daemon=True).start()
